@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/GameClockOverlay.csproj" />
+  <Project Path="tests/GameClockOverlay.Tests.csproj" />
+</Solution>

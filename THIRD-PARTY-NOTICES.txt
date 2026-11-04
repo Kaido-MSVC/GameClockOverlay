@@ -1,0 +1,76 @@
+GameClock Overlay — dependency and license inventory
+Checked 2026-11-04. Application version 0.1.0 (unchanged).
+
+繁體中文
+本專案原始碼：MIT，Copyright (c) 2026 Kaido-MSVC；保留原有 GameClock
+Overlay contributors 版權聲明。全文見 LICENSE。
+直接與間接 NuGet 套件：無。已檢查 csproj 與還原後 project.assets.json。
+框架：Microsoft.NETCore.App、Microsoft.WindowsDesktop.App（WPF、Windows
+Forms，亦使用 System.Drawing）；目標 .NET 10。建置 SDK 10.0.403，
+本機 Runtime / apphost 10.0.14。
+隨附 EXE 含 .NET apphost 啟動器，其原始碼採 MIT；隨附
+licenses/dotnet-runtime-LICENSE.txt 及上游完整第三方通知。
+此為 framework-dependent 發佈，未隨附 .NET / Windows Desktop Runtime。
+WPF、Windows Forms 與 .NET runtime 上游主要原始碼採 MIT，但其第三方元件
+可能採 Apache、BSD、Unicode、zlib 等其他條款。Microsoft 發行的安裝套件
+亦可能有獨立條款。請依實際安裝版本的授權及第三方通知；本文件不將其改授權為 MIT。
+Windows API、系統字型（Segoe UI、Microsoft JhengHei UI、Yu Gothic UI、
+Consolas）由使用者 Windows 提供，未隨附字型檔，仍依各自條款。
+時鐘圖示為本專案自行繪製，未使用第三方圖示或字型套件。
+
+English
+Project source: MIT, Copyright (c) 2026 Kaido-MSVC; the existing GameClock
+Overlay contributors notice is retained. See LICENSE for the full text.
+Direct and transitive NuGet packages: none. Checked the project files and
+restored project.assets.json.
+Framework references: Microsoft.NETCore.App and Microsoft.WindowsDesktop.App
+(WPF, Windows Forms, also System.Drawing), targeting .NET 10. Build SDK:
+10.0.403; local runtime / apphost: 10.0.14.
+The distributed EXE contains the .NET apphost, whose source is MIT licensed.
+Its license and the complete upstream runtime third-party notices are included
+under licenses/. The notices cover the upstream runtime as a whole and do not
+mean that every listed component is included in this small Windows apphost.
+This framework-dependent distribution does not include the .NET / Windows
+Desktop Runtime. The main upstream WPF, Windows Forms and .NET runtime source
+licenses are MIT, but their third-party components may have other terms,
+including Apache, BSD, Unicode and zlib licenses. Microsoft installers may
+also carry separate terms. Consult the licenses and notices for the actual
+installed version; this project's MIT license does not replace those terms.
+Windows APIs and system fonts (Segoe UI, Microsoft JhengHei UI, Yu Gothic UI,
+Consolas) are supplied by the user's Windows installation under their own
+terms. No font files are bundled. The clock icon is drawn by this project;
+no third-party icon or font package is used.
+
+日本語
+本プロジェクトのソース：MIT、Copyright (c) 2026 Kaido-MSVC。
+既存の GameClock Overlay contributors の表示も保持しています。全文は LICENSE。
+直接・間接の NuGet パッケージはありません。プロジェクトファイルと復元後の
+project.assets.json を確認しました。
+使用フレームワーク：Microsoft.NETCore.App、Microsoft.WindowsDesktop.App
+（WPF、Windows Forms、System.Drawing）。対象は .NET 10、ビルド SDK は
+10.0.403、ローカルの Runtime / apphost は 10.0.14 です。
+EXE に含まれる .NET apphost のソースは MIT です。ライセンスと上流の
+Runtime 全体のサードパーティ通知を licenses/ に同梱しています。
+通知にあるすべてのコンポーネントが、この apphost に含まれるわけではありません。
+framework-dependent 配布であり、.NET / Windows Desktop Runtime は同梱しません。
+WPF、Windows Forms、.NET runtime の主要ソースは MIT ですが、サードパーティの
+各コンポーネントには Apache、BSD、Unicode、zlib など独自の条項があります。
+Microsoft のインストーラーにも別の条項がある場合があります。実際にインストール
+されたバージョンのライセンスと通知を確認してください。本プロジェクトの MIT は
+それらの条項を置き換えません。
+Windows API とシステムフォント（Segoe UI、Microsoft JhengHei UI、Yu Gothic UI、
+Consolas）はユーザーの Windows から提供され、各自の条項に従います。
+フォントファイルは同梱しません。時計アイコンは本プロジェクトで描画しており、
+サードパーティのアイコン・フォントパッケージは使用していません。
+
+Included legal texts / 隨附法律原文 / 同梱する法律文書
+licenses/dotnet-runtime-LICENSE.txt
+  https://github.com/dotnet/runtime/blob/v10.0.14/LICENSE.TXT
+licenses/dotnet-runtime-THIRD-PARTY-NOTICES.txt
+  https://github.com/dotnet/runtime/blob/v10.0.14/THIRD-PARTY-NOTICES.TXT
+
+Additional official references / 官方參考 / 公式の参照先
+https://github.com/dotnet/wpf/blob/v10.0.14/LICENSE.TXT
+https://github.com/dotnet/winforms/blob/v10.0.14/LICENSE.TXT
+https://github.com/dotnet/runtime/blob/v10.0.14/src/native/corehost/apphost/apphost.windows.cpp
+https://github.com/dotnet/core/blob/main/license-information.md
