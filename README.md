@@ -4,6 +4,16 @@ Windows 11 x64 的透明置頂時鐘，C# + WPF + .NET 10，MIT 授權。
 使用本機既有 .NET 10 Windows Desktop Runtime，不需安裝 UWP、WinUI 或 MSVC 工作負載。
 沒有額外 NuGet 套件、網路請求、遙測、遊戲 DLL 注入或遊戲 Hook，也不需要系統管理員權限。
 
+## English overview
+
+GameClock Overlay is a transparent, always-on-top desktop clock for Windows 11 x64. It shows the local time in a 24-hour format with optional seconds. Choose a screen corner or drag the clock to a custom position, and adjust its opacity from 25% to 100%.
+
+Optional click-through lets mouse input reach the window beneath the clock. Use **Ctrl + Alt + Shift + F10** or the tray menu to turn click-through off and reopen settings. The interface supports Traditional Chinese, English, and Japanese, with a system language option and a saved manual preference.
+
+The app runs locally without network requests, telemetry, DLL injection, or game hooks. Borderless fullscreen worked in the user's test. Exclusive fullscreen is unsupported. Check each game's rules before using the overlay.
+
+See the [English quick start](#english-quick-start) for setup with the .NET 10 Windows Desktop Runtime x64. The project code is [MIT-licensed](LICENSE). Keep the bundled license files and third-party notices when sharing the package.
+
 ## 啟動
 
 執行 `dist\win-x64\GameClockOverlay.exe`。分享時請保留同資料夾內的 DLL 及 JSON 檔案。
