@@ -20,6 +20,12 @@ public sealed class OverlayWindow : Window
     private readonly DispatcherTimer timer;
     private HwndSource? source;
     private bool positionReady;
+    private bool closed;
+    private bool placementQueued;
+    private Point? pointerDown;
+    private DpiScale dragDpi;
+    private bool dragging;
+    private bool dragCancelled;
     public nint Handle { get; private set; }
     public bool HotkeyAvailable { get; private set; }
     public OverlayWindow(ClockSettings settings, Action changed, Action recover)
@@ -33,15 +39,32 @@ public sealed class OverlayWindow : Window
             Foreground = Brushes.White, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
             Effect = new DropShadowEffect { Color = Colors.Black, BlurRadius = 4, ShadowDepth = 1.5, Opacity = 1 } };
         Content = new Border { Background = new SolidColorBrush(Color.FromArgb(1, 0, 0, 0)), Child = time };
-        MouseLeftButtonDown += (_, e) =>
+        MouseLeftButtonDown += (_, e) => { BeginPointer(PointToScreen(e.GetPosition(this)), e.ClickCount); e.Handled = true; };
+        MouseLeftButtonUp += (_, _) => EndPointer();
+        LostMouseCapture += (_, _) => pointerDown = null;
+        MouseMove += (_, e) =>
         {
-            if (settings.ClickThrough) return;
-            if (e.ClickCount == 2) { recover(); return; }
-            settings.Position = "Free";
-            try { DragMove(); } catch (InvalidOperationException) { }
-            Place(); CapturePosition(); changed();
+            if (pointerDown is not Point start || dragging) return;
+            if (e.LeftButton != MouseButtonState.Pressed || settings.ClickThrough) { CancelPendingDrag(); return; }
+            var current = PointToScreen(e.GetPosition(this));
+            if (!ExceedsDragThreshold(current.X - start.X, current.Y - start.Y, dragDpi)) return;
+            CancelPendingDrag();
+            if (!Native.GetWindowRect(Handle, out var before)) return;
+            dragging = true; dragCancelled = false;
+            bool completed = false;
+            try
+            {
+                DragMove(); // Windows owns move-loop completion / Escape cancellation.
+                completed = !dragCancelled && Mouse.LeftButton == MouseButtonState.Released;
+            }
+            catch (InvalidOperationException ex) { System.Diagnostics.Trace.TraceWarning("Clock drag aborted: {0}", ex); }
+            finally
+            {
+                dragging = false;
+                if (Native.GetWindowRect(Handle, out var after)) FinishDrag(before, after, completed, dragDpi);
+            }
         };
-        MouseRightButtonUp += (_, _) => recover();
+        MouseRightButtonUp += (_, _) => { CancelPendingDrag(); recover(); };
         StateChanged += (_, _) => { if (WindowState == WindowState.Minimized) Hide(); };
         SourceInitialized += (_, _) =>
         {
@@ -52,29 +75,90 @@ public sealed class OverlayWindow : Window
             Apply();
         };
         ContentRendered += (_, _) => { if (!positionReady) { Place(true); positionReady = true; } };
-        SizeChanged += (_, _) => { if (positionReady) Dispatcher.BeginInvoke(() => Place()); };
+        SizeChanged += (_, _) => { if (positionReady) QueuePlacement(); };
+        DpiChanged += (_, _) => QueuePlacement(); // Let WPF apply the suggested DPI rectangle first.
         timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        timer.Tick += (_, _) => UpdateTime(); timer.Start();
-        Closed += (_, _) => { timer.Stop(); if (HotkeyAvailable) Native.UnregisterHotKey(Handle, 1); source?.RemoveHook(Messages); };
+        timer.Tick += (_, _) => UpdateTime();
+        Closed += (_, _) => { closed = true; timer.Stop(); if (HotkeyAvailable) Native.UnregisterHotKey(Handle, 1); source?.RemoveHook(Messages); };
     }
     private nint Messages(nint hwnd, int msg, nint wp, nint lp, ref bool handled)
     {
         if ((msg == 0x0312 && wp == 1) || (uint)msg == Native.RecoveryMessage)
         { Dispatcher.BeginInvoke(recover); handled = true; }
-        if (msg == 0x007E || msg == 0x001A) Dispatcher.BeginInvoke(() => Place()); // display/work-area changes
+        if (dragging && (msg == 0x001F || msg == 0x007E)) dragCancelled = true;
+        if (msg == 0x007E || msg == 0x001A) QueuePlacement(); // display/work-area changes
+        if (msg == 0x001E || msg == 0x0218) Dispatcher.BeginInvoke(() => { if (!closed) UpdateTime(); }); // time change / power resume
         return 0;
+    }
+    internal void BeginPointer(Point screenPoint, int clickCount)
+    {
+        if (settings.ClickThrough || closed) return;
+        CancelPendingDrag();
+        if (clickCount == 2) { recover(); return; }
+        pointerDown = screenPoint; dragDpi = VisualTreeHelper.GetDpi(this);
+        if (!CaptureMouse()) pointerDown = null;
+    }
+    internal void EndPointer() => CancelPendingDrag();
+    private void CancelPendingDrag()
+    {
+        pointerDown = null;
+        if (IsMouseCaptured) ReleaseMouseCapture();
+    }
+    internal static bool ExceedsDragThreshold(double dx, double dy, DpiScale dpi) =>
+        double.IsFinite(dx) && double.IsFinite(dy) &&
+        (Math.Abs(dx) >= Math.Max(4, SystemParameters.MinimumHorizontalDragDistance) * dpi.DpiScaleX ||
+         Math.Abs(dy) >= Math.Max(4, SystemParameters.MinimumVerticalDragDistance) * dpi.DpiScaleY);
+
+    // Shared commit boundary: settings remain untouched until a completed, substantial move.
+    internal bool FinishDrag(Native.Rect before, Native.Rect after, bool completed, DpiScale dpi)
+    {
+        if (closed) return false;
+        if (!completed || settings.ClickThrough ||
+            !ExceedsDragThreshold((double)after.Left - before.Left, (double)after.Top - before.Top, dpi))
+        {
+            Native.SetWindowPos(Handle, (nint)(-1), before.Left, before.Top, 0, 0, Native.NoSize | Native.NoActivateFlag);
+            return false;
+        }
+        settings.Position = "Free"; settings.MonitorDevice = "";
+        settings.X = after.Left; settings.Y = after.Top;
+        Place(true); changed();
+        return true;
+    }
+    private void QueuePlacement()
+    {
+        if (closed || placementQueued) return;
+        placementQueued = true;
+        Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
+        {
+            placementQueued = false;
+            if (!closed) Place();
+        }));
     }
     public void Apply()
     {
-        Opacity = settings.Opacity; Width = settings.ShowSeconds ? 230 : 174;
+        if (settings.ClickThrough) { CancelPendingDrag(); if (dragging) dragCancelled = true; }
+        settings.Normalize();
+        Opacity = settings.Opacity; time.FontSize = settings.FontSize;
+        Width = (settings.ShowSeconds ? 230 : 174) * settings.FontSize / 32;
+        Height = 60 * settings.FontSize / 32;
         if (Handle != 0) Native.SetClickThrough(Handle, settings.ClickThrough && HotkeyAvailable);
         UpdateTime(); if (positionReady) Place();
     }
     private void UpdateTime()
     {
-        var value = DateTime.Now.ToString(settings.ShowSeconds ? "HH:mm:ss" : "HH:mm", CultureInfo.InvariantCulture);
+        if (closed) return;
+        var now = DateTime.Now;
+        var value = now.ToString(settings.ShowSeconds ? "HH:mm:ss" : "HH:mm", CultureInfo.InvariantCulture);
         if (time.Text != value) time.Text = value;
+        timer.Interval = NextUpdate(now, settings.ShowSeconds);
+        timer.Start();
     }
+    internal static TimeSpan NextUpdate(DateTime now, bool seconds)
+    {
+        long unit = seconds ? TimeSpan.TicksPerSecond : TimeSpan.TicksPerMinute;
+        return TimeSpan.FromTicks(unit - now.Ticks % unit + TimeSpan.TicksPerMillisecond * 20);
+    }
+    internal bool TimerRunning => timer.IsEnabled;
     public void Restore()
     {
         if (WindowState != WindowState.Normal) WindowState = WindowState.Normal;
@@ -83,14 +167,15 @@ public sealed class OverlayWindow : Window
     }
     public void CapturePosition()
     {
-        if (IsVisible && WindowState == WindowState.Normal && Handle != 0 && Native.GetWindowRect(Handle, out var r)) { settings.X = r.Left; settings.Y = r.Top; }
+        if (!dragging && IsVisible && WindowState == WindowState.Normal && Handle != 0 && Native.GetWindowRect(Handle, out var r)) { settings.X = r.Left; settings.Y = r.Top; }
     }
     public void Place(bool restore = false)
     {
-        if (!IsVisible || WindowState != WindowState.Normal || Handle == 0 || !Native.GetWindowRect(Handle, out var r)) return;
-        var screen = restore && settings.X.HasValue && settings.Y.HasValue
-            ? Forms.Screen.FromPoint(new System.Drawing.Point(settings.X.Value, settings.Y.Value)) : Forms.Screen.FromHandle(Handle);
-        var area = screen.WorkingArea;
+        if (dragging || !IsVisible || WindowState != WindowState.Normal || Handle == 0 || !Native.GetWindowRect(Handle, out var r)) return;
+        var screen = Array.Find(Forms.Screen.AllScreens, s => s.DeviceName == settings.MonitorDevice)
+            ?? (restore && settings.X.HasValue && settings.Y.HasValue
+                ? Forms.Screen.FromPoint(new System.Drawing.Point(settings.X.Value, settings.Y.Value)) : Forms.Screen.FromHandle(Handle));
+        var area = settings.UseMonitorBounds ? screen.Bounds : screen.WorkingArea;
         int w = r.Right - r.Left, h = r.Bottom - r.Top;
         int x = restore ? settings.X ?? area.Right - w - 16 : r.Left;
         int y = restore ? settings.Y ?? area.Top + 16 : r.Top;

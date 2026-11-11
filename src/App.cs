@@ -11,10 +11,21 @@ namespace GameClockOverlay;
 public sealed class App : Application
 {
     private readonly string? settingsPath;
-    public App() { }
+    public App()
+    {
+        DispatcherUnhandledException += (_, e) => { e.Handled = true; ReportError(e.Exception); Shutdown(1); };
+        Forms.Application.SetUnhandledExceptionMode(Forms.UnhandledExceptionMode.CatchException);
+        Forms.Application.ThreadException += FormsException;
+    }
     // Isolate lifecycle regression tests from the user's settings.
-    internal App(string settingsPath) => this.settingsPath = settingsPath;
-    private Mutex? instance;
+    internal App(string settingsPath) : this() => this.settingsPath = settingsPath;
+    private SingleInstance? instance;
+    private volatile bool exiting;
+    private int recoveryQueued;
+    private bool recovering;
+    private Forms.ContextMenuStrip? trayMenu;
+    internal Action<Exception>? ErrorObserver { get; set; }
+    internal int ErrorCount { get; private set; }
     private Forms.NotifyIcon? tray;
     private Icon? icon;
     private SettingsWindow? settingsWindow;
@@ -28,22 +39,16 @@ public sealed class App : Application
     public static void Main()
     {
         var app = new App { ShutdownMode = ShutdownMode.OnExplicitShutdown };
-        app.DispatcherUnhandledException += (_, e) =>
-        {
-            MessageBox.Show("GameClock Overlay\n" + e.Exception.Message, "GameClock Overlay", MessageBoxButton.OK, MessageBoxImage.Error);
-            e.Handled = true; app.Shutdown(1);
-        };
         app.Run();
     }
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-        instance = new Mutex(true, @"Local\GameClockOverlay.v0.1", out bool first);
-        if (!first)
+        instance = new SingleInstance();
+        if (!instance.IsFirst)
         {
-            var hwnd = Native.FindWindow(null, "GameClock Overlay");
-            if (hwnd != 0) Native.PostMessage(hwnd, Native.RecoveryMessage, 0, 0);
-            else { Strings.Use("auto"); MessageBox.Show(Strings.Get("AlreadyRunning"), "GameClock Overlay"); }
+            try { instance.RequestRecovery(); }
+            catch (Exception ex) { System.Diagnostics.Trace.TraceError("Recovery signal failed: {0}", ex); Shutdown(1); return; }
             Shutdown(); return;
         }
         Store = new SettingsStore(settingsPath ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GameClockOverlay", "settings.json"));
@@ -56,7 +61,8 @@ public sealed class App : Application
         // Create the tray recovery path before showing a potentially click-through overlay.
         icon = CreateIcon();
         tray = new Forms.NotifyIcon { Icon = icon, Text = "GameClock Overlay", Visible = true };
-        tray.DoubleClick += (_, _) => Dispatcher.Invoke(Recover);
+        tray.DoubleClick += (_, _) => RunTrayAction(Recover);
+        instance.Listen(QueueRecovery);
         RefreshTray(); Overlay.Show();
         if (loadError != null) MessageBox.Show(Strings.Get("LoadFailed"), "GameClock Overlay", MessageBoxButton.OK, MessageBoxImage.Information);
         OpenSettings();
@@ -74,22 +80,63 @@ public sealed class App : Application
         try { using var borrowed = Icon.FromHandle(handle); return (Icon)borrowed.Clone(); }
         finally { Native.DestroyIcon(handle); }
     }
+    private void QueueRecovery()
+    {
+        if (exiting || Dispatcher.HasShutdownStarted || Interlocked.Exchange(ref recoveryQueued, 1) != 0) return;
+        // BeginInvoke never waits for a busy or modal UI. Shutdown races leave only a no-op.
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            Interlocked.Exchange(ref recoveryQueued, 0);
+            if (!exiting) RunTrayAction(Recover);
+        }));
+    }
+    private void FormsException(object sender, ThreadExceptionEventArgs e) => ReportError(e.Exception);
+    internal void RunTrayAction(Action action)
+    {
+        if (exiting) return;
+        try { if (Dispatcher.CheckAccess()) action(); else Dispatcher.Invoke(action); }
+        catch (Exception ex) { ReportError(ex); }
+    }
+    private void ReportError(Exception error)
+    {
+        ErrorCount++;
+        System.Diagnostics.Trace.TraceError("{0}", error);
+        try
+        {
+            var path = Path.Combine(Path.GetDirectoryName(settingsPath ?? Store?.Path ??
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GameClockOverlay", "settings.json"))!, "errors.log");
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.AppendAllText(path, DateTimeOffset.Now.ToString("O") + " " + error + Environment.NewLine);
+        }
+        catch (Exception logError) when (logError is IOException or UnauthorizedAccessException)
+        { System.Diagnostics.Trace.TraceError("Error log unavailable: {0}", logError); }
+        if (ErrorObserver != null) { ErrorObserver(error); return; }
+        MessageBox.Show(Strings.Get("OperationFailed"), "GameClock Overlay", MessageBoxButton.OK, MessageBoxImage.Error);
+    }
     public void RefreshTray()
     {
-        if (tray == null) return;
-        var menu = new Forms.ContextMenuStrip();
-        menu.Items.Add(Strings.Get("Unlock"), null, (_, _) => Dispatcher.Invoke(Recover));
-        var pass = new Forms.ToolStripMenuItem(Strings.Get("ClickThrough")) { Checked = Settings.ClickThrough, Enabled = Overlay.HotkeyAvailable };
-        pass.Click += (_, _) => Dispatcher.Invoke(() => { Settings.ClickThrough = !Settings.ClickThrough; Changed(); settingsWindow?.Refresh(); });
-        menu.Items.Add(pass); menu.Items.Add(new Forms.ToolStripSeparator());
-        menu.Items.Add(Strings.Get("About"), null, (_, _) => Dispatcher.Invoke(OpenAbout));
-        menu.Items.Add(Strings.Get("Exit"), null, (_, _) => Dispatcher.Invoke(Quit));
-        var previous = tray.ContextMenuStrip; tray.ContextMenuStrip = menu; previous?.Dispose();
+        if (tray == null || exiting) return;
+        if (trayMenu == null)
+        {
+            trayMenu = new Forms.ContextMenuStrip();
+            trayMenu.Items.Add("", null, (_, _) => RunTrayAction(Recover));
+            var pass = new Forms.ToolStripMenuItem();
+            pass.Click += (_, _) => RunTrayAction(() => { Settings.ClickThrough = !Settings.ClickThrough; Changed(); });
+            trayMenu.Items.Add(pass); trayMenu.Items.Add(new Forms.ToolStripSeparator());
+            trayMenu.Items.Add("", null, (_, _) => RunTrayAction(OpenAbout));
+            // Leave the Click event stack before disposing its owning menu on shutdown.
+            trayMenu.Items.Add("", null, (_, _) => RunTrayAction(() => Dispatcher.BeginInvoke(new Action(Quit))));
+            tray.ContextMenuStrip = trayMenu;
+        }
+        trayMenu.Items[0].Text = Strings.Get("Unlock");
+        var toggle = (Forms.ToolStripMenuItem)trayMenu.Items[1];
+        toggle.Text = Strings.Get("ClickThrough"); toggle.Checked = Settings.ClickThrough; toggle.Enabled = Overlay.HotkeyAvailable;
+        trayMenu.Items[3].Text = Strings.Get("About"); trayMenu.Items[4].Text = Strings.Get("Exit");
     }
     public void Changed()
     {
         if (!Overlay.HotkeyAvailable) Settings.ClickThrough = false;
-        Overlay.Apply(); RefreshTray(); aboutWindow?.Refresh(); saveTimer.Stop(); saveTimer.Start();
+        Overlay.Apply(); RefreshTray(); aboutWindow?.Refresh(); settingsWindow?.SyncExternal(); saveTimer.Stop(); saveTimer.Start();
     }
     private void Save()
     {
@@ -97,7 +144,10 @@ public sealed class App : Application
     }
     public void Recover()
     {
-        Settings.ClickThrough = false; Overlay.Restore(); Changed(); settingsWindow?.Refresh(); OpenSettings();
+        if (recovering || exiting) return;
+        recovering = true;
+        try { Settings.ClickThrough = false; Overlay.Restore(); Changed(); OpenSettings(); }
+        finally { recovering = false; }
     }
     private void OpenSettings()
     {
@@ -125,8 +175,11 @@ public sealed class App : Application
     public void Quit() => Shutdown();
     protected override void OnExit(ExitEventArgs e)
     {
+        exiting = true;
+        instance?.StopListening();
+        Forms.Application.ThreadException -= FormsException;
         if (saveTimer != null) { saveTimer.Stop(); Save(); }
         if (tray != null) { tray.Visible = false; tray.Dispose(); }
-        icon?.Dispose(); instance?.Dispose(); base.OnExit(e);
+        trayMenu?.Dispose(); icon?.Dispose(); instance?.Dispose(); instance = null; base.OnExit(e);
     }
 }

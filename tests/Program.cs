@@ -20,7 +20,12 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length > 0 && args[0] == "--fixes") return FixChecks.Run(args[1]);
+        if (args.Length > 0 && args[0] == "--fix-restart") return FixChecks.Restart(args[1]);
+        if (args.Length > 0 && args[0] == "--instances") return FixChecks.Instances();
         if (args.Length > 0 && args[0] == "--lifecycle") return Lifecycle.Run(args[1], args.Length > 2);
+        if (args.Length > 0 && args[0] == "--display") return DisplayChecks.Run();
+        if (args.Length > 0 && args[0] == "--ui-session") return UiSession.Run(args[1]);
         if (args.Length > 0 && args[0] == "--interactive")
         {
             var desktop = new Application();
@@ -44,6 +49,7 @@ internal static class Program
             Check("Initial save", store.Save(settings));
             var reloaded = store.Load();
             Check("Settings round trip", reloaded.Language == "ja" && reloaded.ShowSeconds && reloaded.ClickThrough && reloaded.Opacity == .55 && reloaded.Position == "Free" && reloaded.X == 345 && reloaded.Y == 234);
+            Check("Old settings gain display defaults", reloaded.FontSize == 32 && reloaded.MonitorDevice == "" && !reloaded.UseMonitorBounds);
             settings.Opacity = .65; Check("Atomic replacement and backup", store.Save(settings) && File.Exists(path + ".bak") && !File.Exists(path + ".tmp"));
             File.WriteAllText(path, "{broken"); var recovered = store.Load();
             Check("Malformed settings recover backup", store.Recovered && recovered.Opacity == .55);
@@ -51,6 +57,13 @@ internal static class Program
             var invalid = new ClockSettings { Language = "xx", Position = "bad", Opacity = -100 }; invalid.Normalize();
             Check("Invalid fields normalized", invalid.Language == "auto" && invalid.Position == "TopRight" && invalid.Opacity == .25);
             invalid.Opacity = double.NaN; invalid.Normalize(); Check("Nonfinite opacity normalized", invalid.Opacity == .9);
+            invalid.FontSize = double.PositiveInfinity; invalid.Normalize(); Check("Nonfinite font normalized", invalid.FontSize == 32);
+            invalid.FontSize = 1000; invalid.Normalize(); Check("Large font clamped", invalid.FontSize == 96);
+            invalid.FontSize = -1; invalid.Normalize(); Check("Small font clamped", invalid.FontSize == 16);
+            var upgraded = new SettingsStore(Path.Combine(dir, "display-settings.json"));
+            Check("Display settings save", upgraded.Save(new() { FontSize = 48, MonitorDevice = "test-monitor", UseMonitorBounds = true }));
+            var display = upgraded.Load();
+            Check("Display settings round trip", display.FontSize == 48 && display.MonitorDevice == "test-monitor" && display.UseMonitorBounds);
             var blocked = new SettingsStore(dir); Check("Unwritable target reports save failure", !blocked.Save(new()) && blocked.Error != null);
             var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
             Exception? guiFailure = null;

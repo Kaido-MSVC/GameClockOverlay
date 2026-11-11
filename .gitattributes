@@ -1,0 +1,16 @@
+# Git stores text as LF. Source/docs use LF; PowerShell checks out CRLF on Windows.
+* text=auto
+*.cs text eol=lf
+*.csproj text eol=lf
+*.slnx text eol=lf
+*.xaml text eol=lf
+*.manifest text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.ps1 text eol=crlf
+*.ico -text
+*.png -text
+*.zip -text
+# Preserve legal originals without line-ending conversion.
+LICENSE text eol=crlf
+licenses/** text eol=lf

@@ -46,6 +46,11 @@ internal static class Lifecycle
             foreach (var language in new[] { "zh-TW", "en", "ja" })
             {
                 Strings.Use(language); app.RefreshTray();
+                window.Refresh(); window.UpdateLayout();
+                var settingsImage = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+                settingsImage.Render(window);
+                var settingsPng = new PngBitmapEncoder(); settingsPng.Frames.Add(BitmapFrame.Create(settingsImage));
+                using (var output = File.Create(Path.Combine(directory, $"settings-{language}.png"))) settingsPng.Save(output);
                 Field<Forms.NotifyIcon>(app, "tray").ContextMenuStrip!.Items[3].PerformClick();
                 var about = Field<AboutWindow>(app, "aboutWindow");
                 Check("Localized about opens from tray: " + language, about.IsVisible && about.Title.EndsWith(Strings.Get("About")) && !about.ShowInTaskbar);

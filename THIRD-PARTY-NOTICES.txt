@@ -1,15 +1,32 @@
+NOTICE PROVENANCE / 通知來源 / 通知の出典
+Application 0.2.0 uses SDK 11.0.100 and apphost 11.0.0, framework-dependent.
+LICENSE and the existing .NET Foundation MIT text are retained unchanged.
+The bundled dotnet-runtime-THIRD-PARTY-NOTICES.txt is the inherited v10.0.14
+upstream aggregate, preserved unchanged for attribution continuity. It is NOT
+a claim to inventory every component of .NET 11. The .NET 11 Runtime itself
+is not redistributed; its installed notices and terms apply separately.
+No additional NuGet or native rendering dependencies are bundled.
+
+0.2.0 使用 SDK 11.0.100 / apphost 11.0.0，未同梱 Runtime。原有 MIT 與
+.NET Foundation MIT 條文未改。原有 runtime 第三方通知來自 v10.0.14，
+原樣保留，並非 .NET 11 全部元件的盤點；本機 Runtime 依其安裝條款。
+
+0.2.0 は SDK 11.0.100 / apphost 11.0.0 を使用。Runtime は同梱しません。
+既存の MIT 文書は変更していません。Runtime の通知は v10.0.14 の原文を
+保持したもので、.NET 11 全体の部品一覧を保証するものではありません。
+
 GameClock Overlay — dependency and license inventory
-Checked 2026-11-04. Application version 0.1.0 (unchanged).
+Checked 2026-11-11. Application version 0.2.0.
 
 繁體中文
 本專案原始碼：MIT，Copyright (c) 2026 Kaido-MSVC；保留原有 GameClock
 Overlay contributors 版權聲明。全文見 LICENSE。
 直接與間接 NuGet 套件：無。已檢查 csproj 與還原後 project.assets.json。
 框架：Microsoft.NETCore.App、Microsoft.WindowsDesktop.App（WPF、Windows
-Forms，亦使用 System.Drawing）；目標 .NET 10。建置 SDK 10.0.403，
-本機 Runtime / apphost 10.0.14。
+Forms，亦使用 System.Drawing）；目標 .NET 11。建置 SDK 11.0.100，
+本機 Runtime / apphost 11.0.0。
 隨附 EXE 含 .NET apphost 啟動器，其原始碼採 MIT；隨附
-licenses/dotnet-runtime-LICENSE.txt 及上游完整第三方通知。
+licenses/dotnet-runtime-LICENSE.txt 及保留的上游第三方通知。
 此為 framework-dependent 發佈，未隨附 .NET / Windows Desktop Runtime。
 WPF、Windows Forms 與 .NET runtime 上游主要原始碼採 MIT，但其第三方元件
 可能採 Apache、BSD、Unicode、zlib 等其他條款。Microsoft 發行的安裝套件
@@ -24,10 +41,10 @@ Overlay contributors notice is retained. See LICENSE for the full text.
 Direct and transitive NuGet packages: none. Checked the project files and
 restored project.assets.json.
 Framework references: Microsoft.NETCore.App and Microsoft.WindowsDesktop.App
-(WPF, Windows Forms, also System.Drawing), targeting .NET 10. Build SDK:
-10.0.403; local runtime / apphost: 10.0.14.
+(WPF, Windows Forms, also System.Drawing), targeting .NET 11. Build SDK:
+11.0.100; local runtime / apphost: 11.0.0.
 The distributed EXE contains the .NET apphost, whose source is MIT licensed.
-Its license and the complete upstream runtime third-party notices are included
+Its license and the retained upstream runtime third-party notices are included
 under licenses/. The notices cover the upstream runtime as a whole and do not
 mean that every listed component is included in this small Windows apphost.
 This framework-dependent distribution does not include the .NET / Windows
@@ -47,10 +64,10 @@ no third-party icon or font package is used.
 直接・間接の NuGet パッケージはありません。プロジェクトファイルと復元後の
 project.assets.json を確認しました。
 使用フレームワーク：Microsoft.NETCore.App、Microsoft.WindowsDesktop.App
-（WPF、Windows Forms、System.Drawing）。対象は .NET 10、ビルド SDK は
-10.0.403、ローカルの Runtime / apphost は 10.0.14 です。
-EXE に含まれる .NET apphost のソースは MIT です。ライセンスと上流の
-Runtime 全体のサードパーティ通知を licenses/ に同梱しています。
+（WPF、Windows Forms、System.Drawing）。対象は .NET 11、ビルド SDK は
+11.0.100、ローカルの Runtime / apphost は 11.0.0 です。
+EXE に含まれる .NET apphost のソースは MIT です。ライセンスと保持した上流の
+Runtime サードパーティ通知を licenses/ に同梱しています。
 通知にあるすべてのコンポーネントが、この apphost に含まれるわけではありません。
 framework-dependent 配布であり、.NET / Windows Desktop Runtime は同梱しません。
 WPF、Windows Forms、.NET runtime の主要ソースは MIT ですが、サードパーティの
@@ -72,5 +89,5 @@ licenses/dotnet-runtime-THIRD-PARTY-NOTICES.txt
 Additional official references / 官方參考 / 公式の参照先
 https://github.com/dotnet/wpf/blob/v10.0.14/LICENSE.TXT
 https://github.com/dotnet/winforms/blob/v10.0.14/LICENSE.TXT
-https://github.com/dotnet/runtime/blob/v10.0.14/src/native/corehost/apphost/apphost.windows.cpp
+https://github.com/dotnet/runtime/blob/v11.0.0/src/native/corehost/apphost/apphost.windows.cpp
 https://github.com/dotnet/core/blob/main/license-information.md

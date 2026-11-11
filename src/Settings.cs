@@ -11,6 +11,9 @@ public sealed class ClockSettings
     public bool ShowSeconds { get; set; }
     public double Opacity { get; set; } = 0.9;
     public bool ClickThrough { get; set; }
+    public double FontSize { get; set; } = 32;
+    public string MonitorDevice { get; set; } = "";
+    public bool UseMonitorBounds { get; set; }
     public string Position { get; set; } = "TopRight";
     public int? X { get; set; }
     public int? Y { get; set; }
@@ -19,6 +22,8 @@ public sealed class ClockSettings
         if (Language is not ("auto" or "zh-TW" or "en" or "ja")) Language = "auto";
         if (Position is not ("Free" or "TopLeft" or "TopRight" or "BottomLeft" or "BottomRight")) Position = "TopRight";
         Opacity = double.IsFinite(Opacity) ? Math.Clamp(Opacity, 0.25, 1) : 0.9;
+        FontSize = double.IsFinite(FontSize) ? Math.Clamp(FontSize, 16, 96) : 32;
+        MonitorDevice ??= "";
     }
 }
 
