@@ -1,185 +1,175 @@
-using System;
-using System.Drawing;
-using System.IO;
-using System.Threading;
-using System.Windows;
-using System.Windows.Threading;
-using Forms = System.Windows.Forms;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Markup.Xaml.Styling;
+using Avalonia.Media;
+using Avalonia.Styling;
+using Avalonia.Themes.Fluent;
+using Avalonia.Threading;
+using GameClockOverlay.AvaloniaApp.Services;
+using GameClockOverlay.AvaloniaApp.Services.Rtss;
+using GameClockOverlay.AvaloniaApp.ViewModels;
+using GameClockOverlay.AvaloniaApp.Views;
 
-namespace GameClockOverlay;
+namespace GameClockOverlay.AvaloniaApp;
 
 public sealed class App : Application
 {
-    private readonly string? settingsPath;
-    public App()
+    internal static string? TestSettingsPath;
+    internal static Action<App>? TestReady;
+    internal static Action? TestBeforeSave;
+    internal static string? TestRtssMap;
+    internal static TimeSpan? TestRtssRetry;
+    private IClassicDesktopStyleApplicationLifetime desktop=null!;
+    private SettingsStore store=null!;
+    private readonly SemaphoreSlim saveGate=new(1,1);
+    private readonly DispatcherTimer saveTimer=new(){Interval=TimeSpan.FromMilliseconds(450)};
+    private TrayIcon? tray;
+    private SettingsWindow? window;
+    public SettingsViewModel ViewModel {get;private set;}=null!;
+    public ClockWindow Clock {get;private set;}=null!;
+    public RtssClockService Rtss {get;private set;}=null!;
+    public RtssInstallInfo? RtssInstallation {get;private set;}
+    public string Status {get;private set;}="";
+    public string? LoadWarning {get;private set;}
+    public bool Exiting {get;private set;}
+    public int ActivationCount {get;private set;}
+    public bool TrayCreated=>tray is not null;
+    internal NativeMenu? TrayMenu=>tray?.Menu;
+    public SettingsWindow SettingsWindow=>window??=new(this);
+    public override void Initialize()
     {
-        DispatcherUnhandledException += (_, e) => { e.Handled = true; ReportError(e.Exception); Shutdown(1); };
-        Forms.Application.SetUnhandledExceptionMode(Forms.UnhandledExceptionMode.CatchException);
-        Forms.Application.ThreadException += FormsException;
+        Styles.Add(new FluentTheme());
+        UiStrings.Initialize();
+        Dispatcher.UIThread.UnhandledException+=Unhandled;
     }
-    // Isolate lifecycle regression tests from the user's settings.
-    internal App(string settingsPath) : this() => this.settingsPath = settingsPath;
-    private SingleInstance? instance;
-    private volatile bool exiting;
-    private int recoveryQueued;
-    private bool recovering;
-    private Forms.ContextMenuStrip? trayMenu;
-    internal Action<Exception>? ErrorObserver { get; set; }
-    internal int ErrorCount { get; private set; }
-    private Forms.NotifyIcon? tray;
-    private Icon? icon;
-    private SettingsWindow? settingsWindow;
-    private AboutWindow? aboutWindow;
-    private DispatcherTimer saveTimer = null!;
-    public ClockSettings Settings { get; private set; } = null!;
-    public SettingsStore Store { get; private set; } = null!;
-    public OverlayWindow Overlay { get; private set; } = null!;
-
-    [STAThread]
-    public static void Main()
+    public override void OnFrameworkInitializationCompleted()
     {
-        var app = new App { ShutdownMode = ShutdownMode.OnExplicitShutdown };
-        app.Run();
-    }
-    protected override void OnStartup(StartupEventArgs e)
-    {
-        base.OnStartup(e);
-        instance = new SingleInstance();
-        if (!instance.IsFirst)
+        if(ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime lifetime)throw new InvalidOperationException("Desktop lifetime required.");
+        desktop=lifetime;desktop.ShutdownMode=ShutdownMode.OnExplicitShutdown;
+        store=new(TestSettingsPath??SettingsStore.DefaultPath);
+        ViewModel=new(store.Load());Strings.Use(ViewModel.Language);
+        LoadWarning=store.Error is null?null:Strings.Get("LoadFailed");
+        Status=LoadWarning??Strings.Get("Saved");
+        // RTSS 後端與桌面時鐘彼此獨立：背景執行緒寫入共享記憶體，狀態變更再投遞到 UI 執行緒顯示。
+        Rtss=new(TestRtssMap??SharedOsd.MapName,TestRtssRetry,TestRtssRetry);
+        Rtss.StatusChanged+=_=>Dispatcher.UIThread.Post(()=>{if(!Exiting)window?.UpdateRtss();});
+        ConfigureRtss();
+        _=Task.Run(()=>{var found=RtssInstall.Find();Dispatcher.UIThread.Post(()=>{RtssInstallation=found;if(!Exiting)window?.UpdateRtss();});});
+        Clock=new(()=>ViewModel.Settings,Changed,Recover);Clock.Show();
+        ApplyTheme();
+        ViewModel.Changed+=ViewModelChanged;
+        Clock.DisplaysChanged+=DisplaysChanged;
+        Clock.TimeChanged+=ClockTimeChanged;
+        tray=new TrayIcon
         {
-            try { instance.RequestRecovery(); }
-            catch (Exception ex) { System.Diagnostics.Trace.TraceError("Recovery signal failed: {0}", ex); Shutdown(1); return; }
-            Shutdown(); return;
-        }
-        Store = new SettingsStore(settingsPath ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GameClockOverlay", "settings.json"));
-        Settings = Store.Load(); Strings.Use(Settings.Language);
-        string? loadError = Store.Error;
-        saveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(450) };
-        saveTimer.Tick += (_, _) => { saveTimer.Stop(); Save(); };
-        Overlay = new OverlayWindow(Settings, Changed, Recover);
-        MainWindow = Overlay;
-        // Create the tray recovery path before showing a potentially click-through overlay.
-        icon = CreateIcon();
-        tray = new Forms.NotifyIcon { Icon = icon, Text = "GameClock Overlay", Visible = true };
-        tray.DoubleClick += (_, _) => RunTrayAction(Recover);
-        instance.Listen(QueueRecovery);
-        RefreshTray(); Overlay.Show();
-        if (loadError != null) MessageBox.Show(Strings.Get("LoadFailed"), "GameClock Overlay", MessageBoxButton.OK, MessageBoxImage.Information);
+            Icon=new WindowIcon(Avalonia.Platform.AssetLoader.Open(new Uri("avares://GameClockOverlay.Avalonia/clock.ico"))),
+            ToolTipText="GameClock Overlay · Avalonia",IsVisible=true
+        };
+        tray.Clicked+=(_,_)=>Recover();RefreshTray();
+        TrayIcon.SetIcons(this,[tray]);
+        saveTimer.Tick+=SaveTimerTick;
+        desktop.Exit+=(_,_)=>Cleanup();
+        desktop.ShutdownRequested+=SessionEnding;
+        Program.Instance?.Listen(()=>Dispatcher.UIThread.Post(()=>{if(!Exiting){ActivationCount++;Recover();}}));
         OpenSettings();
+        // 啟動不主動保存；只有實際變更（Changed）才啟動防彈跳計時器，避免每次啟動都輪替 .bak。
+        if(TestReady is not null)Dispatcher.UIThread.Post(()=>TestReady(this),DispatcherPriority.Background);
+        base.OnFrameworkInitializationCompleted();
     }
-    private static Icon CreateIcon()
+    private void ClockTimeChanged(string text){if(window?.IsVisible==true)window.UpdatePreview();}
+    private void DisplaysChanged(){if(window?.IsVisible==true)window.Build();}
+    private async void SaveTimerTick(object? sender,EventArgs e){saveTimer.Stop();await SaveAsync();}
+    private void ViewModelChanged(string name)
     {
-        using var bitmap = new Bitmap(32, 32);
-        using var graphics = Graphics.FromImage(bitmap);
-        graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-        graphics.Clear(Color.Transparent);
-        using var face = new SolidBrush(Color.FromArgb(26, 48, 68)); graphics.FillEllipse(face, 1, 1, 30, 30);
-        using var pen = new Pen(Color.White, 2.5f) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round };
-        graphics.DrawEllipse(pen, 4, 4, 24, 24); graphics.DrawLine(pen, 16, 16, 16, 9); graphics.DrawLine(pen, 16, 16, 22, 19);
-        var handle = bitmap.GetHicon();
-        try { using var borrowed = Icon.FromHandle(handle); return (Icon)borrowed.Clone(); }
-        finally { Native.DestroyIcon(handle); }
-    }
-    private void QueueRecovery()
-    {
-        if (exiting || Dispatcher.HasShutdownStarted || Interlocked.Exchange(ref recoveryQueued, 1) != 0) return;
-        // BeginInvoke never waits for a busy or modal UI. Shutdown races leave only a no-op.
-        Dispatcher.BeginInvoke(new Action(() =>
-        {
-            Interlocked.Exchange(ref recoveryQueued, 0);
-            if (!exiting) RunTrayAction(Recover);
-        }));
-    }
-    private void FormsException(object sender, ThreadExceptionEventArgs e) => ReportError(e.Exception);
-    internal void RunTrayAction(Action action)
-    {
-        if (exiting) return;
-        try { if (Dispatcher.CheckAccess()) action(); else Dispatcher.Invoke(action); }
-        catch (Exception ex) { ReportError(ex); }
-    }
-    private void ReportError(Exception error)
-    {
-        ErrorCount++;
-        System.Diagnostics.Trace.TraceError("{0}", error);
-        try
-        {
-            var path = Path.Combine(Path.GetDirectoryName(settingsPath ?? Store?.Path ??
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GameClockOverlay", "settings.json"))!, "errors.log");
-            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            File.AppendAllText(path, DateTimeOffset.Now.ToString("O") + " " + error + Environment.NewLine);
-        }
-        catch (Exception logError) when (logError is IOException or UnauthorizedAccessException)
-        { System.Diagnostics.Trace.TraceError("Error log unavailable: {0}", logError); }
-        if (ErrorObserver != null) { ErrorObserver(error); return; }
-        MessageBox.Show(Strings.Get("OperationFailed"), "GameClock Overlay", MessageBoxButton.OK, MessageBoxImage.Error);
-    }
-    public void RefreshTray()
-    {
-        if (tray == null || exiting) return;
-        if (trayMenu == null)
-        {
-            trayMenu = new Forms.ContextMenuStrip();
-            trayMenu.Items.Add("", null, (_, _) => RunTrayAction(Recover));
-            var pass = new Forms.ToolStripMenuItem();
-            pass.Click += (_, _) => RunTrayAction(() => { Settings.ClickThrough = !Settings.ClickThrough; Changed(); });
-            trayMenu.Items.Add(pass); trayMenu.Items.Add(new Forms.ToolStripSeparator());
-            trayMenu.Items.Add("", null, (_, _) => RunTrayAction(OpenAbout));
-            // Leave the Click event stack before disposing its owning menu on shutdown.
-            trayMenu.Items.Add("", null, (_, _) => RunTrayAction(() => Dispatcher.BeginInvoke(new Action(Quit))));
-            tray.ContextMenuStrip = trayMenu;
-        }
-        trayMenu.Items[0].Text = Strings.Get("Unlock");
-        var toggle = (Forms.ToolStripMenuItem)trayMenu.Items[1];
-        toggle.Text = Strings.Get("ClickThrough"); toggle.Checked = Settings.ClickThrough; toggle.Enabled = Overlay.HotkeyAvailable;
-        trayMenu.Items[3].Text = Strings.Get("About"); trayMenu.Items[4].Text = Strings.Get("Exit");
+        if(Exiting)return;
+        Strings.Use(ViewModel.Language);ApplyTheme();Changed();
+        if(name is "Language" or "Import" or "External")window?.Build();
     }
     public void Changed()
     {
-        if (!Overlay.HotkeyAvailable) Settings.ClickThrough = false;
-        Overlay.Apply(); RefreshTray(); aboutWindow?.Refresh(); settingsWindow?.SyncExternal(); saveTimer.Stop(); saveTimer.Start();
+        if(Exiting)return;
+        Clock.Apply();ConfigureRtss();RefreshTray();window?.UpdatePreview();
+        Status=LoadWarning??Strings.Get("Pending");window?.UpdateStatus();
+        saveTimer.Stop();saveTimer.Start();
     }
-    private void Save()
+    private void ConfigureRtss(){var s=ViewModel.Settings;Rtss.Configure(s.GameClockEnabled,s.ShowSeconds,s.TwelveHour,Enum.TryParse<OsdPlacement>(s.GameClockPosition,out var p)?p:OsdPlacement.Rtss);}
+    private void ApplyTheme()=>RequestedThemeVariant=ViewModel.Theme switch{"Dark"=>ThemeVariant.Dark,"Light"=>ThemeVariant.Light,_=>ThemeVariant.Default};
+    public void OpenSettings()
     {
-        Overlay.CapturePosition(); Store.Save(Settings); settingsWindow?.UpdateStatus();
+        if(Exiting)return;
+        var target=SettingsWindow;
+        if(target.WindowState==WindowState.Minimized)target.WindowState=WindowState.Normal;
+        if(!target.IsVisible)target.Show();target.Activate();target.UpdatePreview();
     }
     public void Recover()
     {
-        if (recovering || exiting) return;
-        recovering = true;
-        try { Settings.ClickThrough = false; Overlay.Restore(); Changed(); OpenSettings(); }
-        finally { recovering = false; }
+        if(Exiting)return;
+        ViewModel.Recover();window?.SyncState();OpenSettings();
     }
-    private void OpenSettings()
+    public void ToggleClock(){ViewModel.ClockVisible=!ViewModel.ClockVisible;window?.SyncState();}
+    private void RefreshTray()
     {
-        if (settingsWindow == null)
+        if(tray is null)return;
+        var menu=new NativeMenu();
+        var toggle=new NativeMenuItem(Strings.Get("ToggleClock")){IsChecked=ViewModel.ClockVisible};toggle.Click+=(_,_)=>ToggleClock();menu.Items.Add(toggle);
+        // 「開啟設定」與快捷鍵同樣呼叫 Recover；只在快捷鍵確實註冊成功時標示按鍵。
+        var settings=new NativeMenuItem(Clock.HotkeyAvailable?string.Format(Strings.Get("OpenSettingsHotkey"),ClockWindow.HotkeyLabel):Strings.Get("OpenSettings"));settings.Click+=(_,_)=>Recover();menu.Items.Add(settings);
+        var pass=new NativeMenuItem(Strings.Get("ClickThrough")){IsChecked=ViewModel.ClickThrough,IsEnabled=Clock.HotkeyAvailable};
+        pass.Click+=(_,_)=>{ViewModel.ClickThrough=!ViewModel.ClickThrough;window?.SyncState();};menu.Items.Add(pass);
+        var about=new NativeMenuItem(Strings.Get("About"));about.Click+=(_,_)=>{OpenSettings();SettingsWindow.SelectedTab=4;};menu.Items.Add(about);
+        menu.Items.Add(new NativeMenuItemSeparator());
+        var quit=new NativeMenuItem(Strings.Get("Exit"));quit.Click+=async(_,_)=>await QuitAsync();menu.Items.Add(quit);tray.Menu=menu;
+    }
+    public async Task ImportAsync()
+    {
+        try {var value=await Task.Run(()=>SettingsStore.Read(SettingsStore.LegacyPath));ViewModel.Replace(value);}
+        catch(Exception ex) when(ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
+        {Status=Strings.Get("ImportFailed");window?.UpdateStatus();}
+    }
+    public async Task<bool> SaveAsync()
+    {
+        var snapshot=ViewModel.Settings.Copy();
+        await saveGate.WaitAsync();
+        try
         {
-            settingsWindow = new SettingsWindow(this);
-            settingsWindow.Closed += (_, _) => { Save(); settingsWindow = null; };
-            settingsWindow.Show();
+            bool success=await Task.Run(()=>{TestBeforeSave?.Invoke();return store.Save(snapshot);});
+            Status=success?(LoadWarning??Strings.Get("Saved")):Strings.Get("SaveFailed");
+            window?.UpdateStatus();return success;
         }
-        if (settingsWindow.WindowState == WindowState.Minimized) settingsWindow.WindowState = WindowState.Normal;
-        if (!settingsWindow.IsVisible) settingsWindow.Show();
-        settingsWindow.Activate();
+        finally{saveGate.Release();}
     }
-    public void OpenAbout()
+    public async Task QuitAsync()
     {
-        if (aboutWindow == null)
-        {
-            aboutWindow = new AboutWindow();
-            aboutWindow.Closed += (_, _) => aboutWindow = null;
-        }
-        if (aboutWindow.WindowState == WindowState.Minimized) aboutWindow.WindowState = WindowState.Normal;
-        if (!aboutWindow.IsVisible) aboutWindow.Show();
-        aboutWindow.Activate();
+        if(Exiting)return;Exiting=true;saveTimer.Stop();
+        // 保存出現未預期例外時仍須結束，否則程序停在 Exiting 並持有單一執行個體 Mutex。
+        try{await SaveAsync();}
+        finally{desktop.Shutdown();}
     }
-    public void Quit() => Shutdown();
-    protected override void OnExit(ExitEventArgs e)
+    // Windows 登出／關機（WM_QUERYENDSESSION）與 TryShutdown 都走這裡。不取消要求：同步保存最後狀態，
+    // 並先設定 Exiting，讓設定視窗的 Closing 不再改為隱藏，否則 Avalonia 仍會回報取消而阻止結束工作階段。
+    private void SessionEnding(object? sender,ShutdownRequestedEventArgs e)
     {
-        exiting = true;
-        instance?.StopListening();
-        Forms.Application.ThreadException -= FormsException;
-        if (saveTimer != null) { saveTimer.Stop(); Save(); }
-        if (tray != null) { tray.Visible = false; tray.Dispose(); }
-        trayMenu?.Dispose(); icon?.Dispose(); instance?.Dispose(); instance = null; base.OnExit(e);
+        if(Exiting)return;
+        Exiting=true;saveTimer.Stop();
+        Status=store.SaveFinal(ViewModel.Settings.Copy())?(LoadWarning??Strings.Get("Saved")):Strings.Get("SaveFailed");
+        // 同步清除自己的 OSD 槽；等待有上限（約 2.5 秒），不會否決結束要求。
+        Rtss.Shutdown();
+    }
+    private void Cleanup()
+    {
+        Exiting=true;saveTimer.Stop();
+        ViewModel.Changed-=ViewModelChanged;Clock.DisplaysChanged-=DisplaysChanged;Clock.TimeChanged-=ClockTimeChanged;
+        tray?.Dispose();tray=null;
+        Rtss.Dispose();
+        Dispatcher.UIThread.UnhandledException-=Unhandled;
+    }
+    private void Unhandled(object? sender,DispatcherUnhandledExceptionEventArgs e)
+    {
+        e.Handled=true;
+        try{Directory.CreateDirectory(Path.GetDirectoryName(store.Path)!);File.AppendAllText(Path.Combine(Path.GetDirectoryName(store.Path)!,"errors.log"),DateTimeOffset.Now+" "+e.Exception+Environment.NewLine);}catch(IOException){}catch(UnauthorizedAccessException){}
+        Status=Strings.Get("OperationFailed");window?.UpdateStatus();
+        // 未知 UI 例外後正常保存並結束，避免留下部分更新的視窗。
+        _=QuitAsync();
     }
 }

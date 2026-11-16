@@ -1,0 +1,78 @@
+namespace GameClockOverlay.AvaloniaApp.Services;
+
+internal static class UiStrings
+{
+    internal static void Initialize()
+    {
+        (string Key,string Zh,string En,string Ja)[] rows=
+        [
+            ("General","一般","General","一般"),("AppearanceTab","外觀","Appearance","外観"),("PlacementTab","位置","Position","位置"),("GameTab","遊戲顯示","Game display","ゲーム表示"),
+            ("Visible","顯示桌面時鐘","Show desktop clock","デスクトップ時計を表示"),("Topmost","永遠置頂","Always on top","常に手前に表示"),("TwelveHour","使用 12 小時制","Use 12-hour format","12時間表示"),
+            ("Theme","介面主題","Interface theme","テーマ"),("System","依系統設定","System","システム"),("Light","淺色","Light","ライト"),("Dark","深色","Dark","ダーク"),
+            ("Font","字體","Font family","フォント"),("Color","文字顏色","Text color","文字色"),("ColorHint","輸入 #RRGGBB，或選取下方色彩。","Enter #RRGGBB or choose a color below.","#RRGGBB を入力するか、下の色を選択してください。"),
+            ("InvalidColor","顏色格式無效；請輸入六位十六進位色碼，例如 #FFFFFF。","Invalid color. Use six hexadecimal digits, e.g. #FFFFFF.","無効な色です。#FFFFFF のような6桁の値を入力してください。"),
+            ("OffsetX","水平內縮（DIP）","Horizontal inset (DIP)","横方向の余白（DIP）"),("OffsetY","垂直內縮（DIP）","Vertical inset (DIP)","縦方向の余白（DIP）"),
+            ("OffsetHint","四角模式由螢幕邊緣向內偏移；自由模式可直接拖曳時鐘。","Corner insets are measured inward from screen edges. Drag the clock in free mode.","四隅では画面端から内側への余白です。自由モードでは時計をドラッグできます。"),
+            ("RefreshDisplays","重新偵測螢幕","Refresh displays","モニターを再検出"),("Import","複製匯入舊版設定","Import a copy of v0.2 settings","旧版の設定をコピーして読込"),
+            ("ImportHint","只讀取舊版資料，新版使用獨立設定檔。","Legacy settings are read only. This app saves to its own file.","旧版の設定は読取専用です。このアプリは別のファイルに保存します。"),
+            ("ImportFailed","找不到或無法讀取舊版設定；目前設定未變更。","Legacy settings are unavailable or invalid. Current settings were kept.","旧版の設定が見つからないか無効です。現在の設定は変更されていません。"),
+            ("Pending","正在儲存變更…","Saving changes…","変更を保存中…"),("Preview","即時預覽","Live preview","プレビュー"),("PreviewHint","預覽使用目前字體、顏色與不透明度；大字級最多以 56 DIP 預覽，桌面時鐘維持所選大小。","Preview uses the selected font, color and opacity. Large sizes are previewed at up to 56 DIP; the desktop clock keeps the selected size.","選択したフォント、色、不透明度で表示します。プレビューは最大 56 DIP に縮小しますが、デスクトップ時計は選択したサイズを維持します。"),
+            ("DesktopHint","設定會立即套用；關閉設定後，時鐘仍常駐系統匣。","Changes apply immediately. Closing settings keeps the clock in the tray.","変更はすぐに適用されます。設定を閉じても時計はトレイで動作します。"),
+            // Avalonia-2：RTSS 遊戲內時鐘。{0}…為程式帶入的實際狀態值。
+            ("GameEnable","在遊戲中顯示時鐘（透過 RTSS）","Show the clock in games (via RTSS)","ゲーム内に時計を表示（RTSS 経由）"),
+            ("GameShared","遊戲內時鐘沿用「一般」頁的 12 小時制與秒數設定。字體、顏色、不透明度、位置與滑鼠穿透只套用桌面時鐘；遊戲內的字型、大小與顏色由 RTSS 自身的 OSD 設定決定。","The in-game clock uses the 12-hour and seconds options from General. Font, color, opacity, position and click through apply only to the desktop clock; in-game font, size and color follow RTSS's own OSD settings.","ゲーム内時計は「一般」の12時間表示と秒の設定に従います。フォント、色、不透明度、位置、マウス透過はデスクトップ時計のみに適用され、ゲーム内の文字の種類、大きさ、色は RTSS 側の OSD 設定で決まります。"),
+            // Avalonia-2-POSITION：遊戲內時鐘位置（RTSS 官方 sticky 位置標籤）。{0}＝位置名稱。
+            ("GamePosition","遊戲內時鐘位置","In-game clock position","ゲーム内時計の位置"),
+            ("GamePosRtss","依 RTSS 設定（預設為左上，舊版行為）","Follow RTSS settings (top left by default, previous behavior)","RTSS の設定に従う（既定は左上、従来の動作）"),
+            ("GamePositionHint","與桌面時鐘的位置互相獨立，不會修改 RTSS 的設定。為了不移動其他 OSD 程式的文字，本程式會使用排在最後的 OSD 槽；後面已有其他程式時，會暫時改回 RTSS 設定的位置。","Independent of the desktop clock position. RTSS settings are not changed. To avoid moving text from other OSD apps, this app uses the last OSD slot; if another app is already after it, the clock temporarily falls back to the RTSS position.","デスクトップ時計の位置とは別に設定します。RTSS の設定は変更しません。他の OSD アプリの文字を動かさないよう最後の OSD スロットを使い、後ろに他のアプリがある場合は一時的に RTSS の位置に戻します。"),
+            ("RtssPositionLabel","實際位置","Actual position","実際の位置"),
+            ("PosNotConnected","連線後套用","Applied after connecting","接続後に適用"),
+            ("PosRtss","依 RTSS 設定","Follows RTSS settings","RTSS の設定に従う"),
+            ("PosApplied","{0}（已套用）","{0} (applied)","{0}（適用中）"),
+            ("PosFallback","暫時依 RTSS 設定：後面的 OSD 槽有其他程式，套用{0}會移動它們的文字。對方結束後會自動改回。","Following RTSS settings for now: another app uses a later OSD slot, and applying {0} would move its text. Restored automatically when it exits.","一時的に RTSS の設定に従います：後ろの OSD スロットを他のアプリが使用中で、{0}を適用するとその文字も動くためです。終了すると自動で戻ります。"),
+            ("GameIndependent","桌面時鐘與遊戲內時鐘可各自開關；找不到 RTSS 時，桌面時鐘照常運作。本程式不注入遊戲，也沒有自製 DirectX Hook。","The desktop and in-game clocks can be switched on and off separately. Without RTSS the desktop clock keeps working. No game injection or custom DirectX hooks.","デスクトップ時計とゲーム内時計は個別にオン・オフできます。RTSS がなくてもデスクトップ時計は動作します。ゲームへの注入や独自の DirectX フックはありません。"),
+            ("RtssStatusTitle","RTSS 狀態","RTSS status","RTSS の状態"),
+            ("RtssInstallLabel","RTSS 安裝","RTSS installation","RTSS のインストール"),
+            ("RtssProcessLabel","RTSS 程式","RTSS process","RTSS プロセス"),
+            ("RtssLinkLabel","共享記憶體連線","Shared memory","共有メモリ接続"),
+            ("RtssErrorLabel","最近一次錯誤","Last error","直近のエラー"),
+            ("RtssChecking","檢查中…","Checking…","確認中…"),
+            ("RtssInstalled","已安裝 {0}：{1}","Installed {0}: {1}","インストール済み {0}：{1}"),
+            ("RtssExeMissing","有安裝紀錄，但找不到 RTSS.exe：{0}","Install record found, but RTSS.exe is missing: {0}","インストール記録はありますが RTSS.exe が見つかりません：{0}"),
+            ("RtssNotInstalled","未在 Windows 已安裝的程式中找到 RTSS；仍可手動啟動可攜版。","RTSS was not found among installed programs. A portable copy can still be started manually.","インストール済みプログラムに RTSS が見つかりません。ポータブル版は手動で起動できます。"),
+            ("RtssRunning","執行中","Running","実行中"),
+            ("RtssNotRunning","未偵測到 RTSS 執行中","RTSS is not running","RTSS は実行されていません"),
+            ("RtssNotChecked","啟用遊戲內時鐘後才會偵測","Checked while the in-game clock is on","ゲーム内時計をオンにすると確認します"),
+            ("LinkDisabled","未啟用；不寫入 RTSS","Off. Nothing is written to RTSS.","オフ。RTSS には書き込みません。"),
+            ("LinkCleaning","正在清除本程式的遊戲內時鐘…","Removing this app's in-game clock…","このアプリのゲーム内時計を消去中…"),
+            ("LinkWaiting","等待 RTSS：找不到共享記憶體，每 {0} 秒自動重試。請先啟動 RTSS。","Waiting for RTSS: shared memory not found. Retrying every {0} s. Start RTSS first.","RTSS を待機中：共有メモリが見つかりません。{0} 秒ごとに再試行します。先に RTSS を起動してください。"),
+            ("LinkWaitingRunning","RTSS 正在執行，但共享記憶體尚未就緒或正在重新啟動；每 {0} 秒自動重試。","RTSS is running, but its shared memory is not ready or is restarting. Retrying every {0} s.","RTSS は実行中ですが、共有メモリが未準備または再起動中です。{0} 秒ごとに再試行します。"),
+            ("LinkConnected","已連線：共享記憶體 v{0}，OSD 槽 #{1}，目前寫入「{2}」","Connected: shared memory v{0}, OSD slot #{1}, writing \"{2}\"","接続済み：共有メモリ v{0}、OSD スロット #{1}、書き込み中「{2}」"),
+            ("LinkBusy","RTSS 正在更新 OSD，稍後自動重試。","RTSS is updating its OSD. Retrying shortly.","RTSS が OSD を更新中です。まもなく再試行します。"),
+            ("LinkError","無法寫入：{0}。{1} 秒後自動重試。","Cannot write: {0}. Retrying in {1} s.","書き込めません：{0}。{1} 秒後に再試行します。"),
+            ("LinkConflict","其他程式剛好同時要使用同一個 OSD 槽；已讓給對方，稍後自動改用其他槽。","Another app claimed the same OSD slot at the same moment. The slot was left to it; retrying shortly with another slot.","他のアプリが同時に同じ OSD スロットを確保しました。そのスロットは譲り、まもなく別のスロットで再試行します。"),
+            ("ErrConflict","與其他程式同時認領同一個 OSD 槽，已讓給對方","Another app claimed the same OSD slot at the same time; the slot was left to it","他のアプリと同じ OSD スロットを同時に確保しようとしたため、そのスロットを譲りました"),
+            ("ErrorNone","無","None","なし"),
+            ("ErrNotRunning","RTSS 未執行（找不到共享記憶體）","RTSS not running (shared memory not found)","RTSS 未実行（共有メモリなし）"),
+            ("ErrDead","RTSS 共享記憶體無效或正在關閉","RTSS shared memory invalid or closing","RTSS の共有メモリが無効または終了中"),
+            ("ErrVersion","不支援的 RTSS 共享記憶體版本","Unsupported RTSS shared memory version","未対応の RTSS 共有メモリバージョン"),
+            ("ErrFull","RTSS 的 OSD 槽已全部被其他程式使用","All RTSS OSD slots are used by other apps","RTSS の OSD スロットはすべて他のアプリが使用中"),
+            ("ErrDenied","存取遭拒；RTSS 與本程式的權限等級可能不同","Access denied; RTSS may run with different privileges","アクセス拒否。RTSS と権限レベルが異なる可能性があります"),
+            ("ErrLayout","共享記憶體結構不符合預期，已停止寫入","Unexpected shared memory layout; writing skipped","共有メモリの構造が想定外のため書き込みを中止しました"),
+            ("ErrCleanup","無法確認已清除本程式的 OSD 槽","Could not confirm this app's OSD slot was cleared","このアプリの OSD スロットの消去を確認できません"),
+            ("RtssHelpTitle","安裝與啟動說明","Install and start RTSS","RTSS のインストールと起動"),
+            ("RtssHelp","1. RTSS（RivaTuner Statistics Server）是另外安裝的外部程式，本程式不附帶，也不會自動下載。請從 Guru3D 官方網站下載安裝；不需要 MSI Afterburner。\n2. 啟動 RTSS，確認系統匣出現 RTSS 圖示，並在 RTSS 中開啟「Show On-Screen Display」。\n3. 勾選上方選項後會自動連線；RTSS 較晚啟動、中途關閉或重新啟動時也會自動重新連線。\n4. 遊戲內能否顯示由 RTSS 決定；部分遊戲可能需要在 RTSS 中調整該遊戲的設定。","1. RTSS (RivaTuner Statistics Server) is a separate program. This app does not include or download it. Install it from the official Guru3D website; MSI Afterburner is not required.\n2. Start RTSS, check that its tray icon appears, and turn on Show On-Screen Display in RTSS.\n3. After you turn on the option above, the app connects automatically, and reconnects if RTSS starts later, closes or restarts.\n4. Whether the clock appears in a game is up to RTSS; some games need per-game settings in RTSS.","1. RTSS（RivaTuner Statistics Server）は別途インストールする外部プログラムです。本アプリには含まれず、自動ダウンロードもしません。Guru3D 公式サイトから入手してください。MSI Afterburner は不要です。\n2. RTSS を起動し、トレイにアイコンが表示されることを確認して、RTSS の「Show On-Screen Display」をオンにします。\n3. 上の項目をオンにすると自動で接続し、RTSS の後からの起動、終了、再起動にも自動で再接続します。\n4. ゲーム内に表示されるかどうかは RTSS 次第です。ゲームによっては RTSS 側で個別設定が必要です。"),
+            ("ToggleClock","顯示／隱藏時鐘","Show / hide clock","時計を表示・非表示"),("OpenSettings","開啟設定","Open settings","設定を開く"),
+            // {0}＝ClockWindow.HotkeyLabel（由實際註冊常數產生），{1}＝Win32 錯誤碼。
+            ("HotkeyTitle","全域快捷鍵","Global hotkey","グローバルショートカット"),
+            ("HotkeyAction","按下後：解除滑鼠穿透、顯示時鐘並開啟設定。","Press to unlock click through, show the clock and open settings.","押すと：マウス透過を解除し、時計を表示して設定を開きます。"),
+            ("HotkeyNotToggle","此快捷鍵不會隱藏時鐘；要顯示或隱藏，請使用上方「顯示桌面時鐘」或系統匣選單。也可從系統匣或再次啟動程式恢復。","This hotkey does not hide the clock. To show or hide it, use Show desktop clock above or the tray menu. You can also recover from the tray or by launching the app again.","このショートカットで時計は非表示になりません。表示・非表示は上の「デスクトップ時計を表示」またはトレイメニューを使用してください。トレイや再起動操作からも復帰できます。"),
+            ("HotkeyReady","狀態：已註冊。在任何程式中都能使用；關閉設定或隱藏時鐘後仍有效。","Status: registered. Works from any app, even after settings are closed or the clock is hidden.","状態：登録済み。どのアプリからでも使えます。設定を閉じても、時計を非表示にしても有効です。"),
+            ("HotkeyFailedNew","狀態：註冊失敗（錯誤碼 {1}）。{0} 可能已被其他程式占用，例如原 WPF 版正在執行。快捷鍵與滑鼠穿透目前停用，請改用系統匣的「開啟設定」；結束占用的程式後重新啟動本程式即可重試。","Status: not registered (error {1}). {0} may be in use by another app, such as the original WPF version. The hotkey and click through are disabled; use Open settings in the tray. Close the other app and restart this one to retry.","状態：登録できません（エラー {1}）。{0} は別のアプリ（旧 WPF 版など）が使用している可能性があります。ショートカットとマウス透過は無効です。トレイの「設定を開く」を使用してください。他のアプリを終了してから再起動すると再試行できます。"),
+            ("OpenSettingsHotkey","開啟設定（{0}）","Open settings ({0})","設定を開く（{0}）"),
+            // {0}＝assembly 的資訊版本（csproj InformationalVersion）。
+            ("AboutNew","v{0} · C# 15 / .NET 11 / Avalonia 12.1.6\n遊戲內時鐘透過另外安裝的 RTSS 顯示。原 WPF v0.2.0 保持獨立。授權原文可在下方離線閱讀。","v{0} · C# 15 / .NET 11 / Avalonia 12.1.6\nThe in-game clock uses a separately installed RTSS. WPF v0.2.0 remains separate. Read license texts offline below.","v{0} · C# 15 / .NET 11 / Avalonia 12.1.6\nゲーム内時計は別途インストールした RTSS で表示します。旧 WPF v0.2.0 とは独立しています。以下でライセンス原文を参照できます。")
+        ];
+        foreach(var row in rows)Strings.Values[row.Key]=[row.Zh,row.En,row.Ja];
+    }
+}

@@ -1,17 +1,20 @@
-# GameClock Overlay
+# GameClock Overlay Avalonia
 <!-- impeccable:product-schema 1 -->
 
 ## Platform
-Windows desktop (native WPF)
+Windows 11 x64 desktop.
 
 ## Stack
-User-selected C# / WPF / .NET 11 / C# 15. SDK 11.0.100, installed Windows Desktop Runtime 11.0.0. No external NuGet dependencies, UWP, or WinUI.
+C# 15、.NET 11、Avalonia 12.1.6，輕量 MVVM，使用現有 NuGet 快取。
 
 ## Users and purpose
-Personal use and a small circle of friends. Read local time while gaming or using the desktop.
+個人使用與少量分享友人，讓本機時間保持可見，調整桌面時鐘的顯示與位置。
 
 ## Capabilities and constraints
-User-confirmed: HH:mm, optional seconds, font size, opacity, monitor selection, full-monitor bounds, dragging and four corners, click through with recovery, tray, persistent settings, Traditional Chinese / English / Japanese with system default and manual priority, MIT. No injection, game hooks, elevation, or network. Formal v0.2.0 publication is authorized after build, regression and version consistency checks. User accepted post-fix real-device functionality; second-monitor and mixed-DPI testing is unavailable. User tested borderless fullscreen successfully; exclusive fullscreen is unsupported. Supported validation platform: Windows 11 x64.
+保留 v0.2.0 的桌面主要功能與中英日語，獨立設定資料；正式 WPF 與已驗證的 RTSS 原型全程唯讀。本輪只有桌面 GUI，RTSS 待下一階段。沒有開機啟動、注入或自製 Hook。使用者明確要求 Windows 11 現代化、清楚分組、深淺色主題、適中視窗、低資源使用。
 
 ## Product principles
-Lightweight implementation, safe recovery, maintainable source, proportional verification.
+即時回饋、可恢復的穿透操作、可靠保存、比例相稱的驗證。沿用舊版即時套用與自動儲存；已提出操作偏好詢問，沒有其他指定時依原有行為開發。
+
+## Evidence
+WPF 原始碼位於 D:\projects\GameClockOverlay；RTSS-1 證據位於既有獨立原型。使用者本輪回報 FF9 與 Rune Factory 3 Special 可顯示 RTSS 時鐘，視為人工歷史結果，本輪不重測或直接整合。

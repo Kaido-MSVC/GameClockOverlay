@@ -1,0 +1,16 @@
+{
+  "strictness": "default",
+  "exclude": [
+    "**/bin/**",
+    "**/obj/**",
+    "licenses/**",
+    "LICENSE",
+    "evidence/**",
+    ".impeccable/**",
+    "src/Services/Strings.cs",
+    "src/Services/UiStrings.cs",
+    "dist/**",
+    "docs/legacy/**",
+    "artifacts/**"
+  ]
+}

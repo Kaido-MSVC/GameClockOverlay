@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Collections.Generic;
 
-namespace GameClockOverlay;
+namespace GameClockOverlay.AvaloniaApp.Services;
 
 public static class Strings
 {
