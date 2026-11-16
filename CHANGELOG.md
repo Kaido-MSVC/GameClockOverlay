@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0 — 2026-11-16（本機 Release Candidate，尚未正式發布）
+## 0.3.0 — 2026-11-16
 
 Assembly／檔案版本 0.3.0.0；資訊版本 0.3.0。以 Avalonia 12.1.6 重新開發，與 WPF v0.2.0 分開保存。
 
@@ -8,7 +8,7 @@ Assembly／檔案版本 0.3.0.0；資訊版本 0.3.0。以 Avalonia 12.1.6 重�
 
 - UI 框架由 WPF／Windows Forms 改為 **Avalonia 12.1.6**（Avalonia、Avalonia.Desktop、Avalonia.Themes.Fluent），.NET 11／C# 15，framework-dependent win-x64。
 - 正式執行檔與 Assembly 名稱統一為 GameClockOverlay；圖示資源 URI、測試、封裝腳本一併調整。既有 Avalonia 設定路徑、Mutex／IPC、RTSS Owner 與快捷鍵保持相容。
-- 公開建置改用 nuget.org、提交 NuGet lock files，候選包以 Git commit 識別來源。
+- 公開建置改用 nuget.org、提交 NuGet lock files，發布附件以 Git 提交識別來源。
 - 新的設定路徑 `%LOCALAPPDATA%\GameClockOverlay-Avalonia\`、新的單一執行個體名稱；可從 v0.2.0 唯讀複製匯入設定。
 
 ### 桌面時鐘

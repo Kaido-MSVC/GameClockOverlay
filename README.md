@@ -63,12 +63,12 @@ SDK **11.0.100**（`global.json` 固定）、`net11.0-windows`、C# 15、x64。
 dotnet restore GameClockOverlay.slnx --locked-mode
 dotnet build GameClockOverlay.slnx -c Release --no-restore
 ./scripts/test.ps1
-# 提交來源、確認工作樹乾淨後封裝；既有候選包不覆寫。
-./scripts/package-rc.ps1 -Candidate rc2
+# 提交來源、確認工作樹乾淨後封裝；既有封裝不覆寫。
+./scripts/package-rc.ps1 -Official
 ```
 
 測試是自有 console runner，需要互動式 Windows 桌面。測試使用獨立設定檔與隨機名稱的隔離共享記憶體，不會改動使用者設定或正式 RTSS；只有明確指定 `--rtss-live-ui` 時才會寫入正式 RTSS。
 
-`NuGet.Config` 只使用官方 nuget.org HTTPS 來源，不含本機路徑或憑證。兩個專案各自提交 `packages.lock.json`；`--locked-mode` 驗證版本及內容雜湊，套件版本維持 RC1。需要更新依賴時，明確重新產生並審查 lock file。
+`NuGet.Config` 只使用官方 nuget.org HTTPS 來源，不含本機路徑或憑證。兩個專案各自提交 `packages.lock.json`；`--locked-mode` 驗證版本及內容雜湊。需要更新依賴時，明確重新產生並審查 lock file。
 
-主要來源為 `src/`，必要測試為 `tests/`。WPF 原始碼保留在 Git 歷史與 `v0.2.0` Tag，舊驗收文件位於 `docs/legacy/v0.2.0/`。原始碼不包含本機 evidence、建置輸出或 Hook／RTSS 原型；整合與驗證摘要見 `GITHUB-INTEGRATION-0.3.0.md`。
+主要來源為 `src/`，必要測試為 `tests/`。WPF 原始碼保留在 Git 歷史與 `v0.2.0` Tag，舊驗收文件位於 `docs/legacy/v0.2.0/`。原始碼不包含本機 evidence、建置輸出或 Hook／RTSS 原型；整合與驗證摘要見 `GITHUB-INTEGRATION-0.3.0.md`。正式版提供 Windows x64 執行套件、原始碼 ZIP，以及兩份 ZIP 的 SHA-256 清單。

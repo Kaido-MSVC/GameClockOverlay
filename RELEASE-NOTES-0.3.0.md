@@ -1,6 +1,6 @@
 # GameClock Overlay v0.3.0 Release Notes
 
-> 狀態：**本機 Release Candidate（rc2）**。已在獨立開發分支整合，尚未推送 GitHub、建立 Tag 或 Release。
+Windows x64 使用者請下載 `GameClockOverlay-v0.3.0-win-x64.zip`，解壓縮後執行 `GameClockOverlay.exe`。此執行檔未簽章。原始碼另附於 `GameClockOverlay-v0.3.0-source.zip`，兩份 ZIP 的 SHA-256 收錄在 `SHA256SUMS-v0.3.0.txt`。
 
 ## 重點
 
@@ -35,7 +35,7 @@
 - 如果其他程式也用 sticky 標籤放在同一個角落，兩者可能互相遮蓋。
 - 「已套用」只代表最近一次寫入共享記憶體時帶有位置標籤；RTSS 沒有逐幀的渲染回報。
 - GCO-05：拖曳後位置／螢幕下拉選單可能沒有即時同步；實際位置與保存值正確，屬非阻擋限制。
-- 真正獨佔全螢幕不保證桌面時鐘可見。多螢幕、混合 DPI、螢幕插拔、Windows 10／ARM64 未驗證。
+- 真正獨佔全螢幕不保證桌面時鐘可見。乾淨 Windows 環境、多螢幕、混合 DPI、螢幕插拔、Windows 10／ARM64 未驗證。
 
 ## 驗收狀態
 

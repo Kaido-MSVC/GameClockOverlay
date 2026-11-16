@@ -1,8 +1,10 @@
-﻿# GameClock Overlay（Avalonia）本機 Release Candidate 封裝。
+﻿# GameClock Overlay（Avalonia）候選版及正式版封裝。
 # 依專案既有設定：framework-dependent、win-x64、不啟用 Native AOT／Self-contained／單一檔案。
 # 已存在的版本目錄或 ZIP 一律拒絕覆寫；本腳本不推送、不建立 Tag、不發布。
+[CmdletBinding(DefaultParameterSetName = 'Candidate')]
 param(
-    [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9.-]{0,40}$')][string]$Candidate = 'rc2',
+    [Parameter(Mandatory, ParameterSetName = 'Official')][switch],
+    [Parameter(ParameterSetName = 'Candidate')][ValidatePattern('^[A-Za-z0-9][A-Za-z0-9.-]{0,40}$')][string]$Candidate = 'rc2',
     [string]$OutputRoot = 'dist'
 )
 $ErrorActionPreference = 'Stop'
@@ -11,7 +13,7 @@ $project = Join-Path $root 'src\GameClockOverlay.csproj'
 $xml = [xml](Get-Content -LiteralPath $project -Raw)
 $version = @($xml.Project.PropertyGroup | ForEach-Object { $_.Version } | Where-Object { $_ })[0]
 if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "Unexpected project version: $version" }
-$label = "v$version-$Candidate"
+$label = if ($Official) { "v$version" } else { "v$version-$Candidate" }
 $destination = Join-Path $root $OutputRoot
 $packages = Join-Path $destination 'packages'
 $publish = Join-Path $destination "$label\win-x64"
@@ -105,7 +107,7 @@ try {
     finally { $archive.Dispose() }
     $sourceManifest | Set-Content -LiteralPath $sourceSums -Encoding utf8
     [ordered]@{
-        Version = $version; Candidate = $Candidate; Product = 'GameClock Overlay'; UiFramework = 'Avalonia 12.1.6'
+        Version = $version; Candidate = $(if (!$Official) { $Candidate }); Product = 'GameClock Overlay'; UiFramework = 'Avalonia 12.1.6'
         TargetFramework = 'net11.0-windows'; CSharp = '15.0'; SDK = (& dotnet --version).Trim(); Runtime = 'Microsoft.NETCore.App 11.0.0'
         Deployment = 'framework-dependent'; RID = 'win-x64'; GitCommit = $gitCommit; AssemblyName = 'GameClockOverlay'; Executable = 'GameClockOverlay.exe'
         SourceManifestSha256 = (Get-FileHash -LiteralPath $sourceSums -Algorithm SHA256).Hash.ToLowerInvariant()
