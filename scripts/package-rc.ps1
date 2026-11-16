@@ -3,7 +3,7 @@
 # 已存在的版本目錄或 ZIP 一律拒絕覆寫；本腳本不推送、不建立 Tag、不發布。
 [CmdletBinding(DefaultParameterSetName = 'Candidate')]
 param(
-    [Parameter(Mandatory, ParameterSetName = 'Official')][switch],
+    [Parameter(Mandatory, ParameterSetName = 'Official')][switch]$Official,
     [Parameter(ParameterSetName = 'Candidate')][ValidatePattern('^[A-Za-z0-9][A-Za-z0-9.-]{0,40}$')][string]$Candidate = 'rc2',
     [string]$OutputRoot = 'dist'
 )
