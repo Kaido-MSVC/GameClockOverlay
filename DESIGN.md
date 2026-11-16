@@ -165,4 +165,4 @@ components:
 - **Don't** 新增與即時套用、自動儲存行為矛盾的儲存按鈕。
 - **Don't** 將視覺複核通過擴張為完整功能、硬體、授權或發布驗收。
 
-現有視覺證據為 `evidence/review-fixes/light-settings.png`、`dark-settings.png`、`compact-settings.png`、`light-color-error.png`、`dark-color-error.png`。`evidence/ui-review-verdict.md` 對原有兩項缺陷的結論為 resolved／ship；其範圍僅限該次局部 UI 複核，截圖為 RenderTargetBitmap 客戶區證據。本文件擷取既有實作與紀錄，未新增執行或測試結果。
+本文件記錄既有視覺設計；本機截圖與測試證據不隨原始碼公開提交。功能、硬體與發布驗證以各版本驗證摘要為準。

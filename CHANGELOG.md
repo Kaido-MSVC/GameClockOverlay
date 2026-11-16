@@ -7,6 +7,8 @@ Assembly／檔案版本 0.3.0.0；資訊版本 0.3.0。以 Avalonia 12.1.6 重�
 ### 平台
 
 - UI 框架由 WPF／Windows Forms 改為 **Avalonia 12.1.6**（Avalonia、Avalonia.Desktop、Avalonia.Themes.Fluent），.NET 11／C# 15，framework-dependent win-x64。
+- 正式執行檔與 Assembly 名稱統一為 GameClockOverlay；圖示資源 URI、測試、封裝腳本一併調整。既有 Avalonia 設定路徑、Mutex／IPC、RTSS Owner 與快捷鍵保持相容。
+- 公開建置改用 nuget.org、提交 NuGet lock files，候選包以 Git commit 識別來源。
 - 新的設定路徑 `%LOCALAPPDATA%\GameClockOverlay-Avalonia\`、新的單一執行個體名稱；可從 v0.2.0 唯讀複製匯入設定。
 
 ### 桌面時鐘
@@ -33,10 +35,7 @@ Assembly／檔案版本 0.3.0.0；資訊版本 0.3.0。以 Avalonia 12.1.6 重�
 
 - RTSS OSD 槽是合作式協定，對不遵守鎖的並行寫入者只能偵測與退讓，不保證絕對隔離。
 - 多螢幕、混合 DPI、Windows 10／ARM64 未驗證；真正獨佔全螢幕不保證桌面時鐘可見。
-
-## 0.2.0 及更早版本
-
-WPF 版本，見原倉庫 <https://github.com/Kaido-MSVC/GameClockOverlay> 的 CHANGELOG。
+- GCO-05：拖曳後已開啟的位置下拉可能顯示舊值；不影響位置保存，屬非阻擋限制。
 
 ## WPF 發布歷史
 

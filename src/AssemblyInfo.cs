@@ -1,2 +1,2 @@
 using System.Runtime.CompilerServices;
-[assembly:InternalsVisibleTo("GameClockOverlay.Avalonia.Tests")]
+[assembly:InternalsVisibleTo("GameClockOverlay.Tests")]

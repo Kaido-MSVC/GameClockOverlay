@@ -356,7 +356,7 @@ internal static partial class Program
             Check(window.IsVisible && clock.IsVisible && !vm.ClickThrough,"wm-hotkey-recovers-after-settings-closed-and-clock-hidden");
             window.Hide();
             int count=app.ActivationCount;
-            using(var second=Process.Start(new ProcessStartInfo(Path.Combine(AppContext.BaseDirectory,"GameClockOverlay.Avalonia.exe"),"--ui-test"){UseShellExecute=false,CreateNoWindow=true})!)
+            using(var second=Process.Start(new ProcessStartInfo(Path.Combine(AppContext.BaseDirectory,"GameClockOverlay.exe"),"--ui-test"){UseShellExecute=false,CreateNoWindow=true})!)
             {await second.WaitForExitAsync();Check(second.ExitCode==0,"second-process-exits");}
             await Task.Delay(250);Check(app.ActivationCount==count+1 && window.IsVisible,"second-instance-activates-settings");
             vm.ShowSeconds=true;vm.FontFamily="Consolas";vm.FontSize=32;vm.TextColor="#FFFFFF";vm.MonitorDevice="";vm.Position="TopRight";vm.Language="zh-TW";

@@ -11,10 +11,11 @@ internal static partial class Program
     private static void ReleaseCore()
     {
         var asm=typeof(SettingsWindow).Assembly;
+        Check(asm.GetName().Name=="GameClockOverlay","release-assembly-name");
         Check(asm.GetName().Version==new Version(0,3,0,0),"release-assembly-version-0.3.0.0");
         Check(asm.GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version=="0.3.0.0","release-file-version-0.3.0.0");
         Check(SettingsWindow.AppVersion=="0.3.0","release-informational-version-0.3.0");
-        var exe=FileVersionInfo.GetVersionInfo(Path.Combine(AppContext.BaseDirectory,"GameClockOverlay.Avalonia.exe"));
+        var exe=FileVersionInfo.GetVersionInfo(Path.Combine(AppContext.BaseDirectory,"GameClockOverlay.exe"));
         Check(exe.ProductVersion=="0.3.0" && exe.FileVersion=="0.3.0.0" && exe.ProductName=="GameClock Overlay","release-exe-version-resource");
         foreach(int lang in new[]{0,1,2})
             Check(string.Format(Strings.Values["AboutNew"][lang],SettingsWindow.AppVersion).StartsWith("v0.3.0 ",StringComparison.Ordinal),"release-about-version-"+lang);

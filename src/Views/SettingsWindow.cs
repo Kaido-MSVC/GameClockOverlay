@@ -32,7 +32,7 @@ public sealed class SettingsWindow : Window
         this.app=app;Width=850;Height=740;MinWidth=640;MinHeight=520;
         FontFamily=new("Microsoft JhengHei UI");FontSize=14;
         WindowStartupLocation=WindowStartupLocation.CenterScreen;
-        Icon=new WindowIcon(Avalonia.Platform.AssetLoader.Open(new Uri("avares://GameClockOverlay.Avalonia/clock.ico")));
+        Icon=new WindowIcon(Avalonia.Platform.AssetLoader.Open(new Uri("avares://GameClockOverlay/clock.ico")));
         Closing+=(_,e)=>{if(!app.Exiting){e.Cancel=true;Hide();}};
         PropertyChanged+=(_,e)=>
         {

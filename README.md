@@ -16,7 +16,7 @@ Click-through can be unlocked with **Ctrl + Alt + Shift + F10** or the tray menu
 ## 啟動與使用
 
 1. 安裝 [.NET 11 Runtime x64](https://dotnet.microsoft.com/en-us/download/dotnet/11.0)（Microsoft.NETCore.App 11.0.0 以上的同主版本）。
-2. 完整解壓縮 `GameClockOverlay-v0.3.0-…-win-x64.zip`，執行 `win-x64/GameClockOverlay.Avalonia.exe`。請保留所有 DLL、JSON、文件與 `licenses/`。
+2. 完整解壓縮 `GameClockOverlay-v0.3.0-…-win-x64.zip`，執行 `win-x64/GameClockOverlay.exe`。請保留所有 DLL、JSON、文件與 `licenses/`。
 
 本套件是未簽章的 framework-dependent 版本，不包含 .NET Runtime。
 
@@ -51,6 +51,7 @@ Click-through can be unlocked with **Ctrl + Alt + Shift + F10** or the tray menu
 - 強制終止本程式時，自己的 OSD 項目會殘留到下次啟動才清除；如果剛好在持有 RTSS 鎖時被終止，需要重新啟動 RTSS 才能恢復。
 - 與 WPF v0.2.0 使用相同的快捷鍵；兩者同時執行時，後啟動的一方無法註冊快捷鍵，會停用滑鼠穿透。
 - 多螢幕、混合 DPI、螢幕插拔未實機驗證。Windows 10／ARM64 未驗證。
+- GCO-05：拖曳時鐘後，已開啟的位置／螢幕下拉選單可能仍顯示舊值；實際位置與保存值正確，屬非阻擋的 UI 同步限制。
 
 詳細說明見 [Release Notes](RELEASE-NOTES-0.3.0.md)、[CHANGELOG](CHANGELOG.md) 與 [第三方元件](THIRD-PARTY-NOTICES.md)。
 
@@ -59,12 +60,15 @@ Click-through can be unlocked with **Ctrl + Alt + Shift + F10** or the tray menu
 SDK **11.0.100**（`global.json` 固定）、`net11.0-windows`、C# 15、x64。
 
 ```powershell
-dotnet build src/GameClockOverlay.Avalonia.csproj -c Release
-dotnet build tests/GameClockOverlay.Avalonia.Tests.csproj -c Release
-tests/bin/Release/net11.0-windows/win-x64/GameClockOverlay.Avalonia.Tests.exe <證據資料夾>
-./scripts/package-rc.ps1 -Candidate rc1
+dotnet restore GameClockOverlay.slnx --locked-mode
+dotnet build GameClockOverlay.slnx -c Release --no-restore
+./scripts/test.ps1
+# 提交來源、確認工作樹乾淨後封裝；既有候選包不覆寫。
+./scripts/package-rc.ps1 -Candidate rc2
 ```
 
 測試是自有 console runner，需要互動式 Windows 桌面。測試使用獨立設定檔與隨機名稱的隔離共享記憶體，不會改動使用者設定或正式 RTSS；只有明確指定 `--rtss-live-ui` 時才會寫入正式 RTSS。
 
-`NuGet.Config` 目前只指向開發機的本機 NuGet 快取，其他電腦需改成可用的套件來源才能還原。
+`NuGet.Config` 只使用官方 nuget.org HTTPS 來源，不含本機路徑或憑證。兩個專案各自提交 `packages.lock.json`；`--locked-mode` 驗證版本及內容雜湊，套件版本維持 RC1。需要更新依賴時，明確重新產生並審查 lock file。
+
+主要來源為 `src/`，必要測試為 `tests/`。WPF 原始碼保留在 Git 歷史與 `v0.2.0` Tag，舊驗收文件位於 `docs/legacy/v0.2.0/`。原始碼不包含本機 evidence、建置輸出或 Hook／RTSS 原型；整合與驗證摘要見 `GITHUB-INTEGRATION-0.3.0.md`。

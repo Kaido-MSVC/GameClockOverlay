@@ -1,6 +1,6 @@
 # GameClock Overlay v0.3.0 Release Notes
 
-> 狀態：**本機 Release Candidate（rc1）**。尚未合併到 GitHub、尚未建立 Tag 或 Release。
+> 狀態：**本機 Release Candidate（rc2）**。已在獨立開發分支整合，尚未推送 GitHub、建立 Tag 或 Release。
 
 ## 重點
 
@@ -15,7 +15,7 @@
 
 ## 從 v0.2.0 升級
 
-- v0.3.0 是獨立的新程式（`GameClockOverlay.Avalonia.exe`），**不會覆蓋或修改 v0.2.0**。設定檔位置不同：
+- v0.3.0 是獨立的新程式（`GameClockOverlay.exe`），**不會覆蓋或修改 v0.2.0**。設定檔位置不同：
   - v0.2.0：`%LOCALAPPDATA%\GameClockOverlay\settings.json`
   - v0.3.0：`%LOCALAPPDATA%\GameClockOverlay-Avalonia\settings.json`
 - 可在「一般」分頁按「複製匯入舊版設定」，只讀取 v0.2.0 的設定，不會寫回。
@@ -34,11 +34,12 @@
 - 強制終止本程式時，OSD 項目會殘留到下次啟動才清除；如果剛好在持有 RTSS 鎖時被終止，需要重新啟動 RTSS。
 - 如果其他程式也用 sticky 標籤放在同一個角落，兩者可能互相遮蓋。
 - 「已套用」只代表最近一次寫入共享記憶體時帶有位置標籤；RTSS 沒有逐幀的渲染回報。
+- GCO-05：拖曳後位置／螢幕下拉選單可能沒有即時同步；實際位置與保存值正確，屬非阻擋限制。
 - 真正獨佔全螢幕不保證桌面時鐘可見。多螢幕、混合 DPI、螢幕插拔、Windows 10／ARM64 未驗證。
 
 ## 驗收狀態
 
-- 自動化：Debug／Release 建置與全部測試模式通過（詳見 `RELEASE-CANDIDATE-0.3.0.md`）。
+- 自動化：整合分支的建置與測試紀錄摘要見 `GITHUB-INTEGRATION-0.3.0.md`；與下列既有人工回報分開記錄。
 - 使用者人工驗收（既有回報）：桌面時鐘、拖曳／位置保存／Escape 取消、系統匣、實體快捷鍵、Windows 登出、Final Fantasy IX 與 Rune Factory 3 Special 全螢幕遊戲內時鐘、右上定位、Alt+Tab、停用與退出。
 
 ## 授權

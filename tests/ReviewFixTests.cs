@@ -113,7 +113,7 @@ internal static partial class Program
         // 判斷表正確才實際啟動子程序：若修正失效，子程序可能以使用者的真實設定啟動，所以不冒險。
         if(table)
         {
-            using var child=Process.Start(new ProcessStartInfo(Path.Combine(AppContext.BaseDirectory,"GameClockOverlay.Avalonia.exe"),"--ui-test"){UseShellExecute=false,CreateNoWindow=true})!;
+            using var child=Process.Start(new ProcessStartInfo(Path.Combine(AppContext.BaseDirectory,"GameClockOverlay.exe"),"--ui-test"){UseShellExecute=false,CreateNoWindow=true})!;
             bool exited=child.WaitForExit(15000);
             if(!exited)child.Kill(true);
             Check(exited && child.ExitCode==MainProgram.RefusedExit,"gco03-cli-ui-test-refused-without-runner");

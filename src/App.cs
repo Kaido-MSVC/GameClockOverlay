@@ -63,7 +63,7 @@ public sealed class App : Application
         Clock.TimeChanged+=ClockTimeChanged;
         tray=new TrayIcon
         {
-            Icon=new WindowIcon(Avalonia.Platform.AssetLoader.Open(new Uri("avares://GameClockOverlay.Avalonia/clock.ico"))),
+            Icon=new WindowIcon(Avalonia.Platform.AssetLoader.Open(new Uri("avares://GameClockOverlay/clock.ico"))),
             ToolTipText="GameClock Overlay · Avalonia",IsVisible=true
         };
         tray.Clicked+=(_,_)=>Recover();RefreshTray();

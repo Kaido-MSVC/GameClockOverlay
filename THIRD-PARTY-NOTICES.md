@@ -16,7 +16,7 @@
 | `HarfBuzzSharp.dll` | HarfBuzzSharp 8.3.1.3 | MIT | © Microsoft Corporation；Xamarin, Inc. | `licenses/HarfBuzzSharp-8.3.1.3-LICENSE.txt` |
 | `libHarfBuzzSharp.dll`（原生 HarfBuzz） | HarfBuzzSharp.NativeAssets.Win32 8.3.1.3 | MIT＋HarfBuzz 等上游條款 | 見檔案 | `licenses/HarfBuzzSharp.NativeAssets.Win32-8.3.1.3-LICENSE.txt`、`…-THIRD-PARTY-NOTICES.txt` |
 | `av_libglesv2.dll`（ANGLE） | Avalonia.Angle.Windows.Natives 2.1.27548.20260419 | BSD-3-Clause 型（套件內附 LICENSE） | Copyright 2018 The ANGLE Project Authors（套件 nuspec：The AvaloniaUI Project） | `licenses/Avalonia.Angle.Windows.Natives-2.1.27548.20260419-LICENSE` |
-| `GameClockOverlay.Avalonia.exe` 的啟動器部分 | .NET apphost | MIT | .NET Foundation and Contributors | `licenses/dotnet-runtime-LICENSE.txt`、`dotnet-runtime-THIRD-PARTY-NOTICES.txt` |
+| `GameClockOverlay.exe` 的啟動器部分 | .NET apphost | MIT | .NET Foundation and Contributors | `licenses/dotnet-runtime-LICENSE.txt`、`dotnet-runtime-THIRD-PARTY-NOTICES.txt` |
 
 ## 其他說明
 
