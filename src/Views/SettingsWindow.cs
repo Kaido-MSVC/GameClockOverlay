@@ -5,6 +5,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using GameClockOverlay.AvaloniaApp.Services;
 using GameClockOverlay.AvaloniaApp.Services.Rtss;
@@ -21,6 +22,11 @@ public sealed class SettingsWindow : Window
     private TextBlock? rtssLink;
     private TextBlock rtssProcess=null!,rtssInstall=null!,rtssError=null!,rtssPosition=null!;
     private CheckBox gameBox=null!;
+    private CheckBox? autoStartBox;
+    private TextBlock rtssPathText=null!,rtssPickError=null!;
+    private Button rtssStartButton=null!,rtssAutoButton=null!;
+    // 設定視窗可見時每 3 秒只刷新 RTSS 程序狀態（背景執行，不重新掃描登錄），避免顯示過時的「執行中」。
+    private readonly DispatcherTimer rtssTimer=new(){Interval=TimeSpan.FromSeconds(3)};
     private Border previewFrame=null!;
     private CheckBox visibleBox=null!,clickBox=null!;
     private static readonly ISolidColorBrush PreviewDark=new ImmutableSolidColorBrush(Color.Parse("#18232E")),PreviewLight=new ImmutableSolidColorBrush(Color.Parse("#E6EBF0"));
@@ -36,12 +42,17 @@ public sealed class SettingsWindow : Window
         Closing+=(_,e)=>{if(!app.Exiting){e.Cancel=true;Hide();}};
         PropertyChanged+=(_,e)=>
         {
-            if(e.Property==IsVisibleProperty){if(IsVisible){UpdatePreview();UpdateRtss();}else previewTimer.Stop();}
+            if(e.Property==IsVisibleProperty)
+            {
+                if(IsVisible){UpdatePreview();UpdateRtss();rtssTimer.Start();_=app.RtssLauncher.RefreshRunningAsync();}
+                else{previewTimer.Stop();rtssTimer.Stop();}
+            }
             if(e.Property==WindowStateProperty && WindowState==WindowState.Minimized)Hide();
             if(e.Property==ActualThemeVariantProperty)ApplyPalette();
         };
         previewTimer.Tick+=(_,_)=>UpdatePreview();
-        Closed+=(_,_)=>previewTimer.Stop();
+        rtssTimer.Tick+=(_,_)=>{if(!app.Exiting)_=app.RtssLauncher.RefreshRunningAsync();};
+        Closed+=(_,_)=>{previewTimer.Stop();rtssTimer.Stop();};
         Build();
         ApplyPalette();
     }
@@ -166,6 +177,8 @@ public sealed class SettingsWindow : Window
         var shared=Text(L("GameShared"),12);shared.Opacity=.8;game.Children.Add(shared);
         var independent=Text(L("GameIndependent"),12);independent.Opacity=.8;game.Children.Add(independent);
         game.Children.Add(new Separator{Margin=new(0,4)});
+        game.Children.Add(LaunchPanel());
+        game.Children.Add(new Separator{Margin=new(0,4)});
         var title=Text(L("RtssStatusTitle"),16);title.FontWeight=FontWeight.SemiBold;game.Children.Add(title);
         var grid=new Grid{ColumnDefinitions=new("Auto,*"),RowDefinitions=new("Auto,Auto,Auto,Auto,Auto")};
         TextBlock Value(int row,string key)
@@ -183,10 +196,71 @@ public sealed class SettingsWindow : Window
         UpdateRtss();
         return game;
     }
+    // RTSS 連動啟動：開關、RTSS.exe 路徑與手動啟動。偵測與啟動都在 RtssLauncher 的背景工作中執行。
+    private Control LaunchPanel()
+    {
+        var panel=Stack(8);
+        var head=Text(L("RtssLaunchTitle"),16);head.FontWeight=FontWeight.SemiBold;panel.Children.Add(head);
+        autoStartBox=Check("RtssAutoStart",Vm.AutoStartRtss,x=>Vm.AutoStartRtss=x);panel.Children.Add(autoStartBox);
+        var hint=Text(L("RtssAutoStartHint"),12);hint.Opacity=.8;panel.Children.Add(hint);
+        var row=new Grid{ColumnDefinitions=new("Auto,*"),Margin=new(0,6,0,0)};
+        var label=Text(L("RtssPathLabel"),13);label.Opacity=.8;label.Margin=new(0,0,20,0);label.VerticalAlignment=VerticalAlignment.Center;row.Children.Add(label);
+        rtssPathText=Text("",13);rtssPathText.VerticalAlignment=VerticalAlignment.Center;AccessibleName(rtssPathText,L("RtssPathLabel"));Grid.SetColumn(rtssPathText,1);row.Children.Add(rtssPathText);
+        panel.Children.Add(row);
+        var buttons=new WrapPanel{Orientation=Orientation.Horizontal};
+        Button Make(string key,Func<Task> click)
+        {
+            var b=new Button{Content=L(key),Padding=new(14,7),Margin=new(0,4,8,4)};AccessibleName(b,L(key));
+            b.Click+=async(_,_)=>{try{await click();}catch(Exception ex) when(ex is IOException or UnauthorizedAccessException or InvalidOperationException or UriFormatException or ArgumentException){rtssPickError.Text=L("RtssPickFailed");}};
+            buttons.Children.Add(b);return b;
+        }
+        Make("RtssPick",PickRtssAsync);
+        rtssAutoButton=Make("RtssUseAuto",()=>{rtssPickError.Text="";Vm.RtssPath="";return Task.CompletedTask;});
+        rtssStartButton=Make("RtssStartNow",()=>{app.StartRtss();return Task.CompletedTask;});
+        panel.Children.Add(buttons);
+        // 沒有錯誤時不佔版面。
+        rtssPickError=Text("",12);rtssPickError.Foreground=ErrorBrush();rtssPickError.IsVisible=false;
+        rtssPickError.PropertyChanged+=(_,e)=>{if(e.Property==TextBlock.TextProperty)rtssPickError.IsVisible=!string.IsNullOrEmpty(rtssPickError.Text);};
+        panel.Children.Add(rtssPickError);
+        var noClose=Text(L("RtssNoAutoClose"),12);noClose.Opacity=.8;panel.Children.Add(noClose);
+        return panel;
+    }
+    private async Task PickRtssAsync()
+    {
+        rtssPickError.Text="";
+        IStorageFolder? start=null;
+        if(app.RtssInstallation?.Directory is string dir && await Task.Run(()=>Directory.Exists(dir)))start=await StorageProvider.TryGetFolderFromPathAsync(new Uri(dir));
+        var files=await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title=L("RtssPick"),AllowMultiple=false,SuggestedStartLocation=start,
+            FileTypeFilter=[new FilePickerFileType("RTSS.exe"){Patterns=["RTSS.exe"]}]
+        });
+        if(files.Count==0)return;
+        string? path=files[0].TryGetLocalPath();
+        // 只接受確實存在、檔名為 RTSS.exe 的完整路徑；檢查放在背景執行，避免網路路徑卡住介面。
+        string? valid=await Task.Run(()=>RtssInstall.Validate(path));
+        if(valid is null){rtssPickError.Text=L("RtssPickInvalid");return;}
+        Vm.RtssPath=valid;
+    }
+    internal static string LaunchErrorText(string? code)=>code switch
+    {
+        "canceled"=>L("LaunchCanceled"),
+        "file-missing"=>L("LaunchFileMissing"),
+        "access-denied"=>L("LaunchDenied"),
+        "elevation-required"=>L("LaunchElevation"),
+        "not-executable"=>L("LaunchNotExe"),
+        "exited-early"=>L("LaunchExited"),
+        "no-process"=>L("LaunchNoProcess"),
+        "unsigned"=>L("LaunchUnsigned"),
+        "signature-invalid"=>L("LaunchSignatureInvalid"),
+        "publisher-mismatch"=>L("LaunchPublisher"),
+        "unsupported-path"=>L("LaunchUnsupportedPath"),
+        _=>string.Format(L("LaunchOther"),code)
+    };
     public void UpdateRtss()
     {
         if(rtssLink is null)return;
-        var s=app.Rtss.Status;var install=app.RtssInstallation;
+        var s=app.Rtss.Status;var install=app.RtssInstallation;var launch=app.RtssLaunch;
         rtssLink.Text=s.Link switch
         {
             RtssLink.Connected=>string.Format(L("LinkConnected"),$"{s.Version>>16}.{s.Version&0xFFFF}",s.Entry,s.Text),
@@ -201,9 +275,26 @@ public sealed class SettingsWindow : Window
             :s.Placement==OsdPlacement.Rtss?L("PosRtss")
             :s.Positioned?string.Format(L("PosApplied"),L(s.Placement.ToString()))
             :string.Format(L("PosFallback"),L(s.Placement.ToString()));
-        rtssProcess.Text=s.ProcessRunning switch{true=>L("RtssRunning"),false=>L("RtssNotRunning"),_=>Vm.GameClockEnabled?L("RtssChecking"):L("RtssNotChecked")};
-        rtssInstall.Text=install is null?L("RtssChecking"):install.Directory is null?L("RtssNotInstalled")
-            :install.ExecutableFound?string.Format(L("RtssInstalled"),install.Version??"",install.Directory):string.Format(L("RtssExeMissing"),install.Directory);
+        // 程序狀態以 RtssLauncher 的偵測為主；共享記憶體能連上也代表 RTSS 存在（可攜版或其他名稱的啟動方式）。
+        bool running=launch.State==RtssRunState.Running || s.ProcessRunning==true;
+        rtssProcess.Text=running?L(launch.StartedByUs?"RtssRunningOwned":"RtssRunning"):launch.State switch
+        {
+            RtssRunState.Checking=>L("RtssChecking"),
+            RtssRunState.Starting=>L("RtssStarting"),
+            RtssRunState.StartFailed=>string.Format(L("RtssStartFailed"),LaunchErrorText(launch.Error)),
+            RtssRunState.NotInstalled=>L("RtssNotRunningNoInstall"),
+            _=>L("RtssNotRunning")
+        };
+        if(launch.State==RtssRunState.StartFailed && !running)rtssProcess.Foreground=ErrorBrush();else rtssProcess.ClearValue(TextBlock.ForegroundProperty);
+        string installText=install is null?L("RtssChecking"):install.Directory is null?L("RtssNotInstalled")
+            :install.ExecutableFound?string.Format(L("RtssInstalled"),install.Version??"",install.ExecutablePath)+"\n"+L("RtssSource"+install.Source)
+            :string.Format(L("RtssExeMissing"),install.Directory);
+        if(install?.ConfiguredPathInvalid==true)installText=string.Format(L("RtssPathInvalid"),Vm.RtssPath)+"\n"+installText;
+        rtssInstall.Text=installText;
+        rtssPathText.Text=Vm.RtssPath.Length==0?L("RtssPathAuto"):Vm.RtssPath;
+        rtssAutoButton.IsEnabled=Vm.RtssPath.Length>0;
+        rtssStartButton.IsEnabled=!running && install?.ExecutableFound==true && launch.State is not(RtssRunState.Starting or RtssRunState.Checking);
+        if(autoStartBox is not null && autoStartBox.IsChecked!=Vm.AutoStartRtss)autoStartBox.IsChecked=Vm.AutoStartRtss;
         rtssError.Text=s.LastError is null?L("ErrorNone"):$"{s.LastErrorAt:HH:mm:ss}　{ErrorText(s.LastError)}";
         if(gameBox.IsChecked!=Vm.GameClockEnabled)gameBox.IsChecked=Vm.GameClockEnabled;
     }
@@ -234,6 +325,9 @@ public sealed class SettingsWindow : Window
         Background=Brush.Parse(dark?"#1B1D21":"#F5F6F8");Foreground=Brush.Parse(dark?"#F2F3F5":"#20242C");
         if(colorError is not null)colorError.Foreground=ErrorBrush();
         if(hotkeyStatus is not null && !app.Clock.HotkeyAvailable)hotkeyStatus.Foreground=ErrorBrush();
+        // 切換主題時一併更新 RTSS 錯誤文字的顏色，否則要等下一次狀態更新才變色。
+        if(rtssPickError is not null)rtssPickError.Foreground=ErrorBrush();
+        UpdateRtss();
     }
     private IBrush ErrorBrush()=>Brush.Parse(ActualThemeVariant==Avalonia.Styling.ThemeVariant.Dark?"#FF929C":"#BA2636");
     public void UpdatePreview()

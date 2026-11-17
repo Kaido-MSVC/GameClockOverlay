@@ -72,6 +72,12 @@ public sealed class RtssClockService : IDisposable
         wake.Set();
     }
 
+    // RTSS 剛啟動時呼叫：等待中的工作執行緒立即重試連線，不必等到下一次重試間隔。未啟用時不做任何事。
+    public void Nudge()
+    {
+        lock(gate){if(disposed || worker is null || !enabled || status.Link==RtssLink.Connected)return;wake.Set();}
+    }
+
     private void Run()
     {
         while(true)

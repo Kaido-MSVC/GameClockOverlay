@@ -34,9 +34,9 @@ internal static partial class Program
         File.WriteAllLines(Path.Combine(evidence,"localization.zh-TW.txt"),Strings.Values.Values.Select(x=>x[0]));
         Core();
         if(args is [_,"--rtss-live",var span] && int.TryParse(span,out int liveSeconds) && liveSeconds is >0 and <=3600)return RtssLive(liveSeconds);
-        bool special=args.Any(a=>a is "--session-end" or "--quit-fault" or "--hotkey-conflict" or "--review" or "--visual" or "--rtss-live-ui");
+        bool special=args.Any(a=>a is "--session-end" or "--quit-fault" or "--hotkey-conflict" or "--review" or "--visual" or "--rtss-live-ui" or "--rtss-launch-ui");
         // RTSS 隔離測試只在預設 UI 模式與 --core-only 執行，其餘模式不重跑。
-        if(!special){SharedOsdCore();RtssServiceCore();RtssPositionCore();ReviewFixCore();ReleaseCore();}
+        if(!special){SharedOsdCore();RtssServiceCore();RtssPositionCore();ReviewFixCore();ReleaseCore();RtssLaunchCore();}
         if(args.Contains("--core-only")){WriteResults();return failed==0?0:1;}
         App.TestSettingsPath=Path.Combine(evidence,"ui-settings.json");
         // 所有 GUI 測試預設使用隨機名稱的隔離映射，絕不寫入正式 RTSS；只有 --rtss-live-ui 使用正式映射。
@@ -46,6 +46,7 @@ internal static partial class Program
         if(args.Contains("--session-end"))return SessionEnd();
         if(args.Contains("--quit-fault"))return QuitFault();
         if(args.Contains("--hotkey-conflict"))return HotkeyConflict();
+        if(args.Contains("--rtss-launch-ui"))return RtssLaunchUi();
         // #6：以既有設定檔啟動，確認啟動本身不重寫主檔、不輪替 .bak。
         new SettingsStore(App.TestSettingsPath).Save(new ClockSettings());
         startupHash=Hash(App.TestSettingsPath);

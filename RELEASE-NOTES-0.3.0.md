@@ -39,7 +39,7 @@ Windows x64 使用者請下載 `GameClockOverlay-v0.3.0-win-x64.zip`，解壓縮
 
 ## 驗收狀態
 
-- 自動化：整合分支的建置與測試紀錄摘要見 `GITHUB-INTEGRATION-0.3.0.md`；與下列既有人工回報分開記錄。
+- 自動化：整合分支的建置與測試紀錄摘要見 [v0.3.0 的整合紀錄](https://github.com/Kaido-MSVC/GameClockOverlay/blob/v0.3.0/GITHUB-INTEGRATION-0.3.0.md)；與下列既有人工回報分開記錄。
 - 使用者人工驗收（既有回報）：桌面時鐘、拖曳／位置保存／Escape 取消、系統匣、實體快捷鍵、Windows 登出、Final Fantasy IX 與 Rune Factory 3 Special 全螢幕遊戲內時鐘、右上定位、Alt+Tab、停用與退出。
 
 ## 授權

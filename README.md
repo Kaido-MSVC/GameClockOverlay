@@ -1,22 +1,22 @@
-# GameClock Overlay v0.3.0
+# GameClock Overlay v0.3.1
 
 Windows 11 x64 透明置頂時鐘，可選擇透過 RTSS 在遊戲畫面中顯示時間。
 C# 15 + **Avalonia 12.1.6** + .NET 11，MIT 授權。沒有網路請求、遙測、遊戲注入、自製 DirectX Hook、背景服務或管理員權限需求。
 
-v0.3.0 是以 Avalonia 重新開發的新版，與原 WPF v0.2.0 分開保存、分開設定；v0.2.0 的程式碼、Tag 與 Release 不受影響。
+v0.3.x 是以 Avalonia 重新開發的新版，與原 WPF v0.2.0 分開保存、分開設定；v0.2.0 的程式碼、Tag 與 Release 不受影響。
 
 ## English overview
 
 GameClock Overlay is a transparent, always-on-top desktop clock for Windows 11 x64, rebuilt on Avalonia 12.1.6 and .NET 11. It shows local time in 24- or 12-hour format with optional seconds, a chosen font, color, size and opacity, at a screen corner or a free position.
 
-Version 0.3.0 adds an optional **in-game clock through RTSS (RivaTuner Statistics Server)**. RTSS is a separate program that you install and start yourself; it is not bundled. MSI Afterburner is not required. GameClock Overlay only writes its own text into RTSS shared memory: it does not change RTSS settings or other apps' on-screen displays, and it never injects into games.
+Version 0.3.x adds an optional **in-game clock through RTSS (RivaTuner Statistics Server)**. RTSS is a separate program that you install yourself; it is not bundled or downloaded. GameClock Overlay can optionally start an installed RTSS when it starts (on by default, only while the in-game clock is on; RTSS itself asks for administrator rights). MSI Afterburner is not required. GameClock Overlay only writes its own text into RTSS shared memory: it does not change RTSS settings or other apps' on-screen displays, and it never injects into games.
 
 Click-through can be unlocked with **Ctrl + Alt + Shift + F10** or the tray menu. The interface supports Traditional Chinese, English and Japanese. Requires the [.NET 11 Runtime x64](https://dotnet.microsoft.com/en-us/download/dotnet/11.0) (framework-dependent package).
 
 ## 啟動與使用
 
 1. 安裝 [.NET 11 Runtime x64](https://dotnet.microsoft.com/en-us/download/dotnet/11.0)（Microsoft.NETCore.App 11.0.0 以上的同主版本）。
-2. 完整解壓縮 `GameClockOverlay-v0.3.0-…-win-x64.zip`，執行 `win-x64/GameClockOverlay.exe`。請保留所有 DLL、JSON、文件與 `licenses/`。
+2. 完整解壓縮 `GameClockOverlay-v0.3.1-win-x64.zip`，執行 `win-x64/GameClockOverlay.exe`。請保留所有 DLL、JSON、文件與 `licenses/`。
 
 本套件是未簽章的 framework-dependent 版本，不包含 .NET Runtime。
 
@@ -30,7 +30,10 @@ Click-through can be unlocked with **Ctrl + Alt + Shift + F10** or the tray menu
 
 ### 遊戲內時鐘（RTSS）
 
-- **需要使用者自行安裝並執行 RTSS**（從 Guru3D 官方網站取得）。本程式不附帶、不下載、不啟動 RTSS；不需要 MSI Afterburner。
+- **需要使用者自行安裝 RTSS**（從 Guru3D 官方網站取得）。本程式不附帶、不下載 RTSS；不需要 MSI Afterburner。
+- 「啟動 GameClockOverlay 時自動啟動 RTSS」（預設開啟）：只在已勾選遊戲內時鐘時生效；RTSS 已在執行時不會重複啟動。RTSS 本身要求系統管理員權限，因此 Windows 會顯示使用者帳戶控制提示；本程式維持一般權限。
+- RTSS.exe 依序從手動指定的路徑、Windows 登錄、常見安裝位置偵測；也可在「遊戲顯示」分頁手動選擇。結束本程式時不會關閉 RTSS。
+- 為了安全，只會啟動由 RTSS 發行者（MICRO-STAR INTERNATIONAL）有效簽署的 RTSS.exe；簽章驗證不連網。
 - 在 RTSS 中開啟「Show On-Screen Display」，再到「遊戲顯示」分頁勾選「在遊戲中顯示時鐘（透過 RTSS）」。啟動順序不拘，RTSS 晚啟動、中途關閉或重新啟動時會自動重新連線。
 - 時間格式沿用桌面時鐘的秒數與 12／24 小時制；字型、大小、顏色由 RTSS 的 OSD 設定決定。
 - 位置：右上（全新設定的預設值）、右下、左下，或「依 RTSS 設定」（RTSS 預設為左上）。為了不移動其他 OSD 程式的文字，本程式會使用排在最後的 OSD 槽；後面已有其他程式時，會暫時改回 RTSS 設定的位置，並在「實際位置」說明原因。
@@ -51,9 +54,9 @@ Click-through can be unlocked with **Ctrl + Alt + Shift + F10** or the tray menu
 - 強制終止本程式時，自己的 OSD 項目會殘留到下次啟動才清除；如果剛好在持有 RTSS 鎖時被終止，需要重新啟動 RTSS 才能恢復。
 - 與 WPF v0.2.0 使用相同的快捷鍵；兩者同時執行時，後啟動的一方無法註冊快捷鍵，會停用滑鼠穿透。
 - 多螢幕、混合 DPI、螢幕插拔未實機驗證。Windows 10／ARM64 未驗證。
-- GCO-05：拖曳時鐘後，已開啟的位置／螢幕下拉選單可能仍顯示舊值；實際位置與保存值正確，屬非阻擋的 UI 同步限制。
+- 拖曳時鐘後，已開啟的位置／螢幕下拉選單可能仍顯示舊值；實際位置與保存值正確。
 
-詳細說明見 [Release Notes](RELEASE-NOTES-0.3.0.md)、[CHANGELOG](CHANGELOG.md) 與 [第三方元件](THIRD-PARTY-NOTICES.md)。
+詳細說明見 [Release Notes](RELEASE-NOTES-0.3.1.md)、[CHANGELOG](CHANGELOG.md) 與 [第三方元件](THIRD-PARTY-NOTICES.md)。
 
 ## 建置與測試
 
@@ -71,4 +74,4 @@ dotnet build GameClockOverlay.slnx -c Release --no-restore
 
 `NuGet.Config` 只使用官方 nuget.org HTTPS 來源，不含本機路徑或憑證。兩個專案各自提交 `packages.lock.json`；`--locked-mode` 驗證版本及內容雜湊。需要更新依賴時，明確重新產生並審查 lock file。
 
-主要來源為 `src/`，必要測試為 `tests/`。WPF 原始碼保留在 Git 歷史與 `v0.2.0` Tag，舊驗收文件位於 `docs/legacy/v0.2.0/`。原始碼不包含本機 evidence、建置輸出或 Hook／RTSS 原型；整合與驗證摘要見 `GITHUB-INTEGRATION-0.3.0.md`。正式版提供 Windows x64 執行套件、原始碼 ZIP，以及兩份 ZIP 的 SHA-256 清單。
+主要來源為 `src/`，必要測試為 `tests/`。WPF 原始碼保留在 Git 歷史與 `v0.2.0` Tag。原始碼不包含本機 evidence、建置輸出或 Hook／RTSS 原型。正式版提供 Windows x64 執行套件、原始碼 ZIP，以及兩份 ZIP 的 SHA-256 清單。

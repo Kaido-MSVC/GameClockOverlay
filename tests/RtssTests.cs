@@ -269,7 +269,10 @@ internal static partial class Program
         Check(SettingsStore.Read(legacy) is {GameClockEnabled:false,ShowSeconds:true,FontSize:44},"settings-avalonia1-file-loads-game-clock-off");
         var store=new SettingsStore(Path.Combine(dir,"new.json"));
         Check(store.Save(new ClockSettings{GameClockEnabled=true}) && new SettingsStore(store.Path).Load().GameClockEnabled,"settings-game-clock-roundtrip");
-        Check(!File.ReadAllText(store.Path).Contains("Rtss",StringComparison.OrdinalIgnoreCase) && !File.ReadAllText(store.Path).Contains("Error",StringComparison.Ordinal),"settings-no-runtime-rtss-state");
+        // 連動啟動新增 AutoStartRtss／RtssPath 兩個使用者設定；檢查改為「只保存 ClockSettings 的公開屬性」，執行期狀態不得進入設定檔。
+        var savedNames=JsonDocument.Parse(File.ReadAllText(store.Path)).RootElement.EnumerateObject().Select(p=>p.Name).ToHashSet();
+        Check(savedNames.SetEquals(typeof(ClockSettings).GetProperties().Select(p=>p.Name)) && !savedNames.Overlaps(["Link","Status","ProcessRunning","StartedByUs","LastError","Entry"])
+            && !File.ReadAllText(store.Path).Contains("Error",StringComparison.Ordinal),"settings-no-runtime-rtss-state");
         File.WriteAllText(Path.Combine(evidence,"rtss-timing.json"),JsonSerializer.Serialize(timeline,new JsonSerializerOptions{WriteIndented=true}));
     }
 

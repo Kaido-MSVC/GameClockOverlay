@@ -28,8 +28,13 @@ public sealed partial class ClockSettings
     // Avalonia-2-POSITION：遊戲內時鐘位置，與桌面時鐘的 Position 互相獨立。"Rtss"＝依 RTSS 自身的 OSD 位置（Avalonia-2 原行為）。
     // 全新設定預設右上角；既有設定檔缺少此欄位時，由 SettingsStore.Read 補為 "Rtss"，不改變既有使用者的畫面。
     public string GameClockPosition { get; set; } = "TopRight";
+    // RTSS 連動啟動：程式啟動且遊戲內時鐘已啟用時，若 RTSS 未執行就啟動它。預設開啟；舊設定檔缺少此欄位時同樣為開啟。
+    public bool AutoStartRtss { get; set; } = true;
+    // 手動指定的 RTSS.exe 完整路徑；空字串＝自動偵測。是否存在於執行期檢查，失效時保留原值供介面提示，不自動清除。
+    public string RtssPath { get; set; } = "";
     public void Normalize()
     {
+        RtssPath = string.IsNullOrWhiteSpace(RtssPath) || RtssPath.Length > 1024 ? "" : RtssPath.Trim();
         // 不提供獨立的左上：RTSS 預設位置即左上，其他值（含 "TopLeft"）一律回到 "Rtss"。
         if (GameClockPosition is not ("Rtss" or "TopRight" or "BottomLeft" or "BottomRight")) GameClockPosition = "Rtss";
         if (Language is not ("auto" or "zh-TW" or "en" or "ja")) Language = "auto";

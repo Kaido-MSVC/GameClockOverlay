@@ -2,7 +2,8 @@
 param(
     [Parameter(Mandatory = $true)][string]$Zip,
     [Parameter(Mandatory = $true)][string]$ExtractTo,
-    [Parameter(Mandatory = $true)][string]$PublishDirectory
+    [Parameter(Mandatory = $true)][string]$PublishDirectory,
+    [string]$Version = '0.3.1'
 )
 $ErrorActionPreference = 'Stop'
 if (Test-Path -LiteralPath $ExtractTo) { throw "Extraction destination already exists: $ExtractTo" }
@@ -33,7 +34,7 @@ foreach ($file in $actual) {
 $exe = Join-Path $payload 'GameClockOverlay.exe'
 $info = (Get-Item -LiteralPath $exe).VersionInfo
 $assembly = [Reflection.AssemblyName]::GetAssemblyName((Join-Path $payload 'GameClockOverlay.dll'))
-if ($info.ProductVersion -ne '0.3.0' -or $info.FileVersion -ne '0.3.0.0' -or $assembly.Name -ne 'GameClockOverlay' -or $assembly.Version -ne [version]'0.3.0.0') { throw 'Version or assembly mismatch' }
+if ($info.ProductVersion -ne $Version -or $info.FileVersion -ne "$Version.0" -or $assembly.Name -ne 'GameClockOverlay' -or $assembly.Version -ne [version]"$Version.0") { throw 'Version or assembly mismatch' }
 $runtime = Get-Content -LiteralPath (Join-Path $payload 'GameClockOverlay.runtimeconfig.json') -Raw | ConvertFrom-Json
 if ($runtime.runtimeOptions.framework.name -ne 'Microsoft.NETCore.App' -or $runtime.runtimeOptions.framework.version -ne '11.0.0' -or $runtime.runtimeOptions.includedFrameworks) { throw 'Runtime mismatch' }
 $notices = Get-Content -LiteralPath (Join-Path $payload 'THIRD-PARTY-NOTICES.md') -Raw

@@ -112,7 +112,7 @@ try {
         Deployment = 'framework-dependent'; RID = 'win-x64'; GitCommit = $gitCommit; AssemblyName = 'GameClockOverlay'; Executable = 'GameClockOverlay.exe'
         SourceManifestSha256 = (Get-FileHash -LiteralPath $sourceSums -Algorithm SHA256).Hash.ToLowerInvariant()
         SourceFileCount = $sourceFiles.Count; BuiltUtc = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
-        ExternalDependency = 'RTSS (RivaTuner Statistics Server) is installed and started by the user; not bundled'
+        ExternalDependency = 'RTSS (RivaTuner Statistics Server) is installed by the user and not bundled; the app can start an installed, publisher-signed RTSS.exe'
     } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $publish 'RELEASE-PROVENANCE.json') -Encoding utf8
 
     # 逐檔雜湊（SHA256SUMS.txt 本身除外），再壓縮。

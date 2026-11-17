@@ -21,6 +21,8 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
     public bool ClickThrough {get=>Settings.ClickThrough;set=>Change(()=>Settings.ClickThrough=value);}
     public bool GameClockEnabled {get=>Settings.GameClockEnabled;set=>Change(()=>Settings.GameClockEnabled=value);}
     public string GameClockPosition {get=>Settings.GameClockPosition;set=>Change(()=>Settings.GameClockPosition=value);}
+    public bool AutoStartRtss {get=>Settings.AutoStartRtss;set=>Change(()=>Settings.AutoStartRtss=value);}
+    public string RtssPath {get=>Settings.RtssPath;set=>Change(()=>Settings.RtssPath=value);}
     public bool UseMonitorBounds{get=>Settings.UseMonitorBounds;set=>Change(()=>Settings.UseMonitorBounds=value);}
     public double FontSize {get=>Settings.FontSize;set=>Change(()=>Settings.FontSize=value);}
     public double Opacity {get=>Settings.Opacity;set=>Change(()=>Settings.Opacity=value);}

@@ -20,6 +20,8 @@ public sealed class App : Application
     internal static Action? TestBeforeSave;
     internal static string? TestRtssMap;
     internal static TimeSpan? TestRtssRetry;
+    // 測試注入的 RTSS 系統操作。測試模式（TestSettingsPath）未注入時改用 BlockedRtssSystem：可偵測但絕不啟動正式 RTSS。
+    internal static IRtssSystem? TestRtssSystem;
     private IClassicDesktopStyleApplicationLifetime desktop=null!;
     private SettingsStore store=null!;
     private readonly SemaphoreSlim saveGate=new(1,1);
@@ -30,6 +32,8 @@ public sealed class App : Application
     public ClockWindow Clock {get;private set;}=null!;
     public RtssClockService Rtss {get;private set;}=null!;
     public RtssInstallInfo? RtssInstallation {get;private set;}
+    public RtssLauncher RtssLauncher {get;private set;}=null!;
+    public RtssLaunchStatus RtssLaunch {get;private set;}=new(RtssRunState.Checking,null);
     public string Status {get;private set;}="";
     public string? LoadWarning {get;private set;}
     public bool Exiting {get;private set;}
@@ -55,7 +59,11 @@ public sealed class App : Application
         Rtss=new(TestRtssMap??SharedOsd.MapName,TestRtssRetry,TestRtssRetry);
         Rtss.StatusChanged+=_=>Dispatcher.UIThread.Post(()=>{if(!Exiting)window?.UpdateRtss();});
         ConfigureRtss();
-        _=Task.Run(()=>{var found=RtssInstall.Find();Dispatcher.UIThread.Post(()=>{RtssInstallation=found;if(!Exiting)window?.UpdateRtss();});});
+        // RTSS 安裝偵測與連動啟動全部在背景執行；結果投遞回 UI 執行緒。只在遊戲內時鐘已啟用時自動啟動。
+        RtssLauncher=new(TestRtssSystem??(TestSettingsPath is null?new RtssSystem():new BlockedRtssSystem()));
+        RtssLauncher.StatusChanged+=s=>Dispatcher.UIThread.Post(()=>RtssLaunchChanged(s));
+        var initial=ViewModel.Settings;
+        _=RtssLauncher.StartupAsync(initial.RtssPath,initial.AutoStartRtss && initial.GameClockEnabled);
         Clock=new(()=>ViewModel.Settings,Changed,Recover);Clock.Show();
         ApplyTheme();
         ViewModel.Changed+=ViewModelChanged;
@@ -77,6 +85,16 @@ public sealed class App : Application
         if(TestReady is not null)Dispatcher.UIThread.Post(()=>TestReady(this),DispatcherPriority.Background);
         base.OnFrameworkInitializationCompleted();
     }
+    private void RtssLaunchChanged(RtssLaunchStatus s)
+    {
+        if(Exiting)return;
+        RtssLaunch=s;RtssInstallation=s.Install;
+        // 程序存在不等於 OSD 可用：只喚醒共享記憶體重試，連線結果仍以 RtssClockService 實際寫入為準。
+        if(s.State==RtssRunState.Running)Rtss.Nudge();
+        window?.UpdateRtss();
+    }
+    public void StartRtss(){if(!Exiting)_=RtssLauncher.StartAsync(ViewModel.Settings.RtssPath);}
+    public void RefreshRtss(){if(!Exiting)_=RtssLauncher.RefreshAsync(ViewModel.Settings.RtssPath);}
     private void ClockTimeChanged(string text){if(window?.IsVisible==true)window.UpdatePreview();}
     private void DisplaysChanged(){if(window?.IsVisible==true)window.Build();}
     private async void SaveTimerTick(object? sender,EventArgs e){saveTimer.Stop();await SaveAsync();}
@@ -85,6 +103,7 @@ public sealed class App : Application
         if(Exiting)return;
         Strings.Use(ViewModel.Language);ApplyTheme();Changed();
         if(name is "Language" or "Import" or "External")window?.Build();
+        if(name is "RtssPath" or "Import")RefreshRtss();
     }
     public void Changed()
     {
@@ -162,6 +181,8 @@ public sealed class App : Application
         ViewModel.Changed-=ViewModelChanged;Clock.DisplaysChanged-=DisplaysChanged;Clock.TimeChanged-=ClockTimeChanged;
         tray?.Dispose();tray=null;
         Rtss.Dispose();
+        // 只釋放 RTSS 程序控制代碼；不關閉 RTSS（見 RtssLauncher 說明）。
+        RtssLauncher.Dispose();
         Dispatcher.UIThread.UnhandledException-=Unhandled;
     }
     private void Unhandled(object? sender,DispatcherUnhandledExceptionEventArgs e)

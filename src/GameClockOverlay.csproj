@@ -9,9 +9,9 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AssemblyName>GameClockOverlay</AssemblyName><RootNamespace>GameClockOverlay.AvaloniaApp</RootNamespace>
     <ApplicationName>GameClockOverlay</ApplicationName>
-    <!-- v0.3.0：與 WPF v0.2.0 相同的版本欄位寫法；不把原始碼修訂附加到資訊版本。 -->
-    <Version>0.3.0</Version><AssemblyVersion>0.3.0.0</AssemblyVersion><FileVersion>0.3.0.0</FileVersion>
-    <InformationalVersion>0.3.0</InformationalVersion><IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <!-- v0.3.1：與 WPF v0.2.0 相同的版本欄位寫法；不把原始碼修訂附加到資訊版本。 -->
+    <Version>0.3.1</Version><AssemblyVersion>0.3.1.0</AssemblyVersion><FileVersion>0.3.1.0</FileVersion>
+    <InformationalVersion>0.3.1</InformationalVersion><IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <Product>GameClock Overlay</Product><AssemblyTitle>GameClock Overlay</AssemblyTitle><Authors>Kaido-MSVC</Authors>
     <Copyright>Copyright (c) 2026 Kaido-MSVC; GameClock Overlay contributors</Copyright>
     <ApplicationIcon>clock.ico</ApplicationIcon><ApplicationManifest>app.manifest</ApplicationManifest>

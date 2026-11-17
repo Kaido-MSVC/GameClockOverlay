@@ -8,7 +8,7 @@ $root = Split-Path $PSScriptRoot -Parent
 foreach ($configuration in $Configurations) {
     $runner = Join-Path $root "tests/bin/$configuration/net11.0-windows/win-x64/GameClockOverlay.Tests.exe"
     if (!(Test-Path -LiteralPath $runner)) { throw "Build the $configuration test runner first" }
-    foreach ($mode in 'ui','hotkey-conflict','quit-fault','session-end','review') {
+    foreach ($mode in 'ui','hotkey-conflict','quit-fault','session-end','review','rtss-launch-ui') {
         $output = [IO.Path]::GetFullPath((Join-Path $root "$EvidenceRoot/$configuration/$mode"))
         if (Test-Path -LiteralPath $output) { throw "Evidence already exists: $output" }
         New-Item -ItemType Directory -Path $output -Force | Out-Null
