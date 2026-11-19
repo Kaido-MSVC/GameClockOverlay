@@ -51,9 +51,7 @@ Assembly／檔案版本 0.3.0.0；資訊版本 0.3.0。以 Avalonia 12.1.6 重�
 
 ## WPF 發布歷史
 
-# Changelog
-
-## 0.2.0 — 2026-11-11
+### 0.2.0 — 2026-11-11
 
 Formal release: assembly / file version 0.2.0.0; informational version and Git tag 0.2.0 / v0.2.0.
 
@@ -73,7 +71,7 @@ Formal release: assembly / file version 0.2.0.0; informational version and Git t
 - Use versioned publish directories and checksum files, preserving earlier packages.
 - True exclusive fullscreen is NOT implemented. Borderless visibility is not evidence of exclusive support.
 
-## 0.1.0 — 2026-11-04
+### 0.1.0 — 2026-11-04
 
 Initial shared Windows x64 WPF clock: seconds, opacity, dragging / corners, click-through recovery,
 tray, persistent settings, three languages and offline license viewer.

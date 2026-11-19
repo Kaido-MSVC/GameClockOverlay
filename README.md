@@ -13,10 +13,14 @@ Version 0.3.x adds an optional **in-game clock through RTSS (RivaTuner Statistic
 
 Click-through can be unlocked with **Ctrl + Alt + Shift + F10** or the tray menu. The interface supports Traditional Chinese, English and Japanese. Requires the [.NET 11 Runtime x64](https://dotnet.microsoft.com/en-us/download/dotnet/11.0) (framework-dependent package).
 
+Download the [v0.3.1 Windows x64 ZIP](https://github.com/Kaido-MSVC/GameClockOverlay/releases/download/v0.3.1/GameClockOverlay-v0.3.1-win-x64.zip) and check it against [SHA256SUMS-v0.3.1.txt](https://github.com/Kaido-MSVC/GameClockOverlay/releases/download/v0.3.1/SHA256SUMS-v0.3.1.txt).
+
 ## 啟動與使用
 
+正式版本為 [v0.3.1](https://github.com/Kaido-MSVC/GameClockOverlay/releases/tag/v0.3.1)。下載後，請使用 [SHA256SUMS-v0.3.1.txt](https://github.com/Kaido-MSVC/GameClockOverlay/releases/download/v0.3.1/SHA256SUMS-v0.3.1.txt) 核對 Windows x64 ZIP。若要使用遊戲內時鐘，請另行安裝 RTSS，並依照下方的 [RTSS 設定](#遊戲內時鐘rtss) 啟用。
+
 1. 安裝 [.NET 11 Runtime x64](https://dotnet.microsoft.com/en-us/download/dotnet/11.0)（Microsoft.NETCore.App 11.0.0 以上的同主版本）。
-2. 完整解壓縮 `GameClockOverlay-v0.3.1-win-x64.zip`，執行 `win-x64/GameClockOverlay.exe`。請保留所有 DLL、JSON、文件與 `licenses/`。
+2. 完整解壓縮 [GameClockOverlay-v0.3.1-win-x64.zip](https://github.com/Kaido-MSVC/GameClockOverlay/releases/download/v0.3.1/GameClockOverlay-v0.3.1-win-x64.zip)，執行 `win-x64/GameClockOverlay.exe`。請保留所有 DLL、JSON、文件與 `licenses/`。
 
 本套件是未簽章的 framework-dependent 版本，不包含 .NET Runtime。
 
